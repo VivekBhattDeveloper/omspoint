@@ -1,0 +1,307 @@
+// --------------------------------------------------------------------------------------
+// App Navigation System (Primary Left Nav + Secondary Header Dropdown)
+// --------------------------------------------------------------------------------------
+// This file defines the navigation system for the logged-in section of the app.
+// There are two main navigation components:
+//
+//   - Navigation: The primary navigation, rendered as a vertical sidebar on the left.
+//     - To extend: add new items to the `navigationItems` array.
+//     - Each item should have a title, path, and icon.
+//
+//   - SecondaryNavigation: The secondary navigation, rendered as a dropdown menu in the header.
+//     - To extend: add new items to the `secondaryNavigationItems` array.
+//     - Each item should have a title, path, and icon.
+//     - The dropdown also includes a "Sign out" action.
+//
+// Icons are imported from lucide-react. Navigation uses react-router's <Link> for routing.
+//
+// --------------------------------------------------------------------------------------
+// To extend: add to navigationItems or secondaryNavigationItems. For custom rendering,
+// edit the Navigation or SecondaryNavigation components.
+// --------------------------------------------------------------------------------------
+
+import type { ExoticComponent, ReactNode } from "react";
+import { Fragment, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router";
+import { useSignOut } from "@gadgetinc/react";
+import { NavDrawer } from "@/components/shared/NavDrawer";
+import {
+  Home,
+  User,
+  LogOut,
+  Users,
+  Mail,
+  Building2,
+  Gauge,
+  Layers,
+  ShieldCheck,
+  Network,
+  Key,
+  FolderCog,
+  Printer,
+  Route,
+  Landmark,
+  Activity,
+  ClipboardList,
+  PackageSearch,
+  Settings,
+  FileStack,
+  Truck,
+  ClipboardCheck,
+  Coins,
+  BarChart3,
+  ShoppingCart,
+  LifeBuoy,
+} from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+type NavIcon = ExoticComponent<{ className: string }>;
+
+interface NavItem {
+  title: string;
+  path: string;
+  icon: NavIcon;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+const navigationSections: NavSection[] = [
+  {
+    title: "Overview",
+    items: [
+      { title: "Home", path: "/signed-in", icon: Home },
+    ],
+  },
+  {
+    title: "Admin Console",
+    items: [
+      { title: "Dashboard", path: "/admin", icon: Gauge },
+      { title: "Organizations", path: "/admin/orgs", icon: Building2 },
+      { title: "Users & Teams", path: "/admin/users", icon: Users },
+      { title: "Roles & Permissions", path: "/admin/rbac", icon: ShieldCheck },
+      { title: "Integrations", path: "/admin/integrations", icon: Network },
+      { title: "Secrets Vault", path: "/admin/secrets", icon: Key },
+      { title: "Catalog Schema", path: "/admin/catalog/schema", icon: Layers },
+      { title: "Print Profiles", path: "/admin/print/profiles", icon: Printer },
+      { title: "Routing Policies", path: "/admin/routing", icon: Route },
+      { title: "Finance Config", path: "/admin/finance/config", icon: Landmark },
+      { title: "Observability", path: "/admin/observability", icon: Activity },
+      { title: "Audit & Reports", path: "/admin/audit", icon: ClipboardList },
+    ],
+  },
+  {
+    title: "Vendor Console",
+    items: [
+      { title: "Vendor Dashboard", path: "/vendor", icon: Gauge },
+      { title: "Orders", path: "/vendor/orders", icon: ClipboardCheck },
+      { title: "Print Jobs", path: "/vendor/print-jobs", icon: Printer },
+      { title: "QA", path: "/vendor/qa", icon: ClipboardList },
+      { title: "Shipping", path: "/vendor/shipping", icon: Truck },
+      { title: "Returns", path: "/vendor/returns", icon: PackageSearch },
+      { title: "Catalog", path: "/vendor/catalog", icon: FolderCog },
+      { title: "Printers & Jigs", path: "/vendor/printers", icon: Printer },
+      { title: "Finance", path: "/vendor/finance", icon: Coins },
+      { title: "Reports", path: "/vendor/reports", icon: BarChart3 },
+      { title: "Settings", path: "/vendor/settings", icon: Settings },
+      { title: "Vendor Directory", path: "/vendors", icon: Building2 },
+    ],
+  },
+  {
+    title: "Seller Console",
+    items: [
+      { title: "Seller Dashboard", path: "/seller", icon: Gauge },
+      { title: "Channels", path: "/seller/channels", icon: Network },
+      { title: "Catalog", path: "/seller/catalog", icon: FolderCog },
+      { title: "Assortments", path: "/seller/assortments", icon: Layers },
+      { title: "Listings", path: "/seller/listings", icon: FileStack },
+      { title: "Orders", path: "/seller/orders", icon: ShoppingCart },
+      { title: "Returns & RMA", path: "/seller/returns", icon: PackageSearch },
+      { title: "Customer Service", path: "/seller/cs", icon: LifeBuoy },
+      { title: "Finance", path: "/seller/finance", icon: Coins },
+      { title: "Reports", path: "/seller/reports", icon: BarChart3 },
+      { title: "Settings", path: "/seller/settings", icon: Settings },
+      { title: "Seller Directory", path: "/sellers", icon: Users },
+    ],
+  },
+  {
+    title: "Global",
+    items: [
+      { title: "My Profile", path: "/profile", icon: User },
+      { title: "Team", path: "/team", icon: Users },
+      { title: "Invite", path: "/invite", icon: Mail },
+      { title: "Help Center", path: "/help", icon: LifeBuoy },
+    ],
+  },
+];
+
+// Mobile hamburger menu, uses Sheet for slide-out drawer
+export const MobileNav = () => {
+  return (
+    <div className="flex md:hidden">
+      <NavDrawer>{({ close }) => <Navigation onLinkClick={close} />}</NavDrawer>
+    </div>
+  );
+};
+
+// Desktop left nav bar
+export const DesktopNav = () => {
+  return (
+    <div className="hidden md:flex w-64 flex-col fixed inset-y-0 z-30">
+      <div className="flex flex-col flex-grow bg-background border-r h-full">
+        <Navigation />
+      </div>
+    </div>
+  );
+};
+
+/**
+ * The secondary navigation items for the header dropdown menu.
+ * To add a new link, add an object with title, path, and icon.
+ */
+
+const secondaryNavigationItems: NavItem[] = [
+  {
+    title: "Profile",
+    path: "/profile",
+    icon: User,
+  },
+
+  {
+    title: "Team",
+    path: "/team",
+    icon: Users,
+  },
+  {
+    title: "Invite",
+    path: "/invite",
+    icon: Mail,
+  },
+];
+
+/**
+ * Primary navigation sidebar for logged-in users.
+ * Renders navigationItems as vertical links with icons.
+ */
+
+export const Navigation = ({ onLinkClick }: { onLinkClick?: () => void }) => {
+  const location = useLocation();
+
+  return (
+    <>
+      <div className="h-16 flex items-center px-6 border-b">
+        <Link to="/signed-in" className="flex items-center" onClick={onLinkClick}>
+          <img src="/api/assets/autologo?background=light" alt="App logo" className="h-8 w-auto" />
+        </Link>
+      </div>
+      <nav className="flex-1 px-4 py-4 space-y-4 overflow-y-auto">
+        {navigationSections.map((section) => (
+          <Fragment key={section.title}>
+            <p className="px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wide">
+              {section.title}
+            </p>
+            <div className="space-y-1">
+              {section.items.map((item) => {
+                const isActive = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={cn(
+                      "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
+                      isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"
+                    )}
+                    onClick={onLinkClick}
+                  >
+                    <item.icon className="mr-3 h-4 w-4" />
+                    {item.title}
+                  </Link>
+                );
+              })}
+            </div>
+          </Fragment>
+        ))}
+      </nav>
+    </>
+  );
+};
+
+/**
+ * Secondary navigation dropdown for user/account actions.
+ * Renders secondaryNavigationItems as dropdown links with icons.
+ * Includes a "Sign out" action at the bottom.
+ *
+ * @param icon - The icon to display as the dropdown trigger (usually a user avatar or icon).
+ */
+
+export const SecondaryNavigation = ({ icon }: { icon: ReactNode }) => {
+  const [userMenuActive, setUserMenuActive] = useState(false);
+
+  return (
+    <DropdownMenu open={userMenuActive} onOpenChange={setUserMenuActive}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="lg"
+          className={`p-2 rounded-full focus-visible:ring-0 ${userMenuActive ? "bg-muted hover:bg-muted" : ""}`}
+        >
+          {icon}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <>
+          {secondaryNavigationItems.map((item) => (
+            <DropdownMenuItem key={item.path} asChild className="cursor-pointer">
+              <Link to={item.path} className="flex items-center">
+                <item.icon className="mr-2 h-4 w-4" />
+                {item.title}
+              </Link>
+            </DropdownMenuItem>
+          ))}
+          <SignOutOption />
+        </>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+const SignOutOption = () => {
+  const signOut = useSignOut({ redirectToPath: "/" });
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error: any) {
+      // If the user is not properly signed in, redirect to home page
+      if (error?.message?.includes('not signed in') || error?.message?.includes('unauthorized')) {
+        navigate("/");
+      } else {
+        // Log other errors to console
+        console.error("Sign out error:", error);
+      }
+    }
+  };
+
+  return (
+    <DropdownMenuItem onClick={handleSignOut} className="flex items-center text-red-600 focus:text-red-600 cursor-pointer">
+      <LogOut className="mr-2 h-4 w-4" />
+      Sign out
+    </DropdownMenuItem>
+  );
+};
+
+// --------------------------------------------------------------------------------------
+// To extend: add to navigationItems or secondaryNavigationItems. For custom rendering,
+// edit the Navigation or SecondaryNavigation components.
+// --------------------------------------------------------------------------------------
