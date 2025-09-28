@@ -89,6 +89,9 @@
   ▸ Listings
       • Publish/Withdraw, Compliance Checks
   ▸ Orders (intake, edits/cancellations)
+  ▸ Designs
+      • Add Designs
+      • Index of design assigned to the products
   ▸ Returns & RMA
   ▸ Customer Service (CS tools)
   ▸ Finance
@@ -128,6 +131,8 @@
 | Seller → Listings | Listing | Publish/withdraw, compliance fix |
 | Seller → Orders/CS | Order, ReturnRMA | Manage orders, returns/RMA |
 | Seller → Finance | Statement, Settlement | Review transfers, payouts |
+| Seller → Design | Add Design, Assign design | Design properties, Print Size |
+
 
 > See Technical Spec’s ERD for full relationships and fields.
 
