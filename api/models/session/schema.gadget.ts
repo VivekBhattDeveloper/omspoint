@@ -7,10 +7,16 @@ export const schema: GadgetModel = {
   type: "gadget/model-schema/v1",
   storageKey: "jNlrlGTwDwCd",
   fields: {
+    roles: {
+      type: "roleList",
+      default: ["unauthenticated"],
+      storageKey: "hO0pd_5laFy3",
+    },
     user: {
       type: "belongsTo",
       parent: { model: "user" },
       storageKey: "nTgkDrlseXlB",
     },
   },
+  shopify: { fields: ["shop", "shopifyCustomer", "shopifySID"] },
 };

@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Activity, AlertCircle, AlertTriangle, CheckCircle2, ShieldCheck } from "lucide-react";
-import { schema as productModelSchema } from "../../api/models/product/schema.gadget";
+import { schema as productModelSchema } from "../api/models/product/schema.gadget";
 
 const RELATIONSHIP_TYPES = new Set(["belongsTo", "hasOne", "hasMany"]);
 
@@ -76,6 +76,7 @@ export type NormalizedProduct = {
 type CatalogDataset = {
   products: NormalizedProduct[];
   vendors: NormalizedVendor[];
+  validationIssues: CatalogValidationIssue[];
   source: DatasetSource;
   error?: string;
 };
@@ -162,102 +163,14 @@ export type CatalogSnapshot = {
   datasetError?: string;
 };
 
-export const FALLBACK_VENDORS: NormalizedVendor[] = [
-  {
-    id: "vendor-northwind",
-    name: "Northwind Manufacturing",
-    city: "Austin",
-    state: "TX",
-    country: "USA",
-    updatedAt: "2025-02-12T14:35:00Z",
-  },
-  {
-    id: "vendor-contoso",
-    name: "Contoso Print Labs",
-    city: "Portland",
-    state: "OR",
-    country: "USA",
-    updatedAt: "2025-02-16T09:20:00Z",
-  },
-  {
-    id: "vendor-alpine",
-    name: "Alpine Fulfillment",
-    city: "Denver",
-    state: "CO",
-    country: "USA",
-    updatedAt: "2025-02-10T18:05:00Z",
-  },
-];
+// Minimal fallback data for edge cases
+export const FALLBACK_VENDORS: NormalizedVendor[] = [];
 
-export const FALLBACK_PRODUCTS: NormalizedProduct[] = [
-  {
-    id: "prod-sample-001",
-    productName: "Custom Photo Canvas",
-    productDescription: { markdown: "Edge-wrapped canvas with archival inks." },
-    price: 45,
-    orderId: "ORD-1001",
-    createdAt: "2025-02-10T12:10:00Z",
-    updatedAt: "2025-02-17T14:20:00Z",
-    order: {
-      id: "order-1001",
-      orderId: "ORD-1001",
-      seller: {
-        id: "seller-northwind",
-        name: "Northwind Retail",
-        vendor: { id: "vendor-northwind", name: "Northwind Manufacturing" },
-      },
-    },
-  },
-  {
-    id: "prod-sample-002",
-    productName: "Holiday Card Pack",
-    productDescription: { markdown: "" },
-    price: 0,
-    orderId: "ORD-1002",
-    createdAt: "2025-02-11T09:45:00Z",
-    updatedAt: "2025-02-15T11:05:00Z",
-    order: {
-      id: "order-1002",
-      orderId: "ORD-1002",
-      seller: {
-        id: "seller-contoso",
-        name: "Contoso Marketplace",
-        vendor: { id: "vendor-contoso", name: "Contoso Print Labs" },
-      },
-    },
-  },
-  {
-    id: "prod-sample-003",
-    productName: "",
-    productDescription: { markdown: "Premium etched glass ornament." },
-    price: 32,
-    orderId: "ORD-1003",
-    createdAt: "2025-02-12T08:15:00Z",
-    updatedAt: "2025-02-16T17:45:00Z",
-    order: {
-      id: "order-1003",
-      orderId: "ORD-1003",
-      seller: {
-        id: "seller-alpine",
-        name: "Alpine Gifts",
-        vendor: { id: "vendor-alpine", name: "Alpine Fulfillment" },
-      },
-    },
-  },
-  {
-    id: "prod-sample-004",
-    productName: "Personalized Mug",
-    productDescription: null,
-    price: 18,
-    orderId: null,
-    createdAt: "2025-02-13T13:30:00Z",
-    updatedAt: "2025-02-17T09:10:00Z",
-  },
-];
+export const FALLBACK_PRODUCTS: NormalizedProduct[] = [];
 
 export const FALLBACK_DATASET: CatalogDataset = {
-  products: FALLBACK_PRODUCTS,
-  vendors: FALLBACK_VENDORS,
+  products: [],
+  vendors: [],
   source: "fallback",
 };
 
@@ -589,6 +502,7 @@ export const evaluateCatalogSnapshot = (
 ): CatalogSnapshot => {
   const products = dataset.products ?? [];
   const vendors = dataset.vendors ?? [];
+  const existingValidationIssues = dataset.validationIssues ?? [];
   const totalProducts = products.length;
 
   const vendorDirectory = new Map<string, NormalizedVendor>();
@@ -609,8 +523,16 @@ export const evaluateCatalogSnapshot = (
   });
 
   const vendorState = new Map<string, VendorAccumulator>();
-  const validationIssues: CatalogValidationIssue[] = [];
+  const syntheticValidationIssues: CatalogValidationIssue[] = [];
   let issueCounter = 0;
+
+  // Process existing validation issues from the database first
+  existingValidationIssues.forEach((issue) => {
+    const accumulator = attributeAccumulators.get(issue.attributeKey);
+    if (accumulator && accumulator.sampleIssues.length < 3) {
+      accumulator.sampleIssues.push(issue);
+    }
+  });
 
   products.forEach((product, index) => {
     const normalizedProduct: NormalizedProduct = product ?? {};
@@ -646,27 +568,34 @@ export const evaluateCatalogSnapshot = (
         return;
       }
 
-      const issue: CatalogValidationIssue = {
-        id: `${productId}:${definition.key}:${issueCounter += 1}`,
-        attributeKey: definition.key,
-        attributeLabel: definition.label,
-        productId,
-        productName: normalizedProduct.productName ?? undefined,
-        vendorId: vendorAccumulator?.vendor.id,
-        vendorName: vendorAccumulator?.vendor.name,
-        message:
-          evaluation.message ??
-          (evaluation.missing
-            ? `${definition.label} is missing`
-            : `${definition.label} is invalid`),
-        severity: evaluation.severity ?? (definition.required ? "error" : "warning"),
-        source: "ingestion",
-        observedAt: productTimestamp,
-      };
+      // Only create synthetic issues if we don't have real ones for this product/attribute combination
+      const hasExistingIssue = existingValidationIssues.some(
+        (issue) => issue.productId === productId && issue.attributeKey === definition.key
+      );
 
-      validationIssues.push(issue);
-      if (accumulator.sampleIssues.length < 3) {
-        accumulator.sampleIssues.push(issue);
+      if (!hasExistingIssue) {
+        const issue: CatalogValidationIssue = {
+          id: `synthetic-${productId}:${definition.key}:${issueCounter += 1}`,
+          attributeKey: definition.key,
+          attributeLabel: definition.label,
+          productId,
+          productName: normalizedProduct.productName ?? undefined,
+          vendorId: vendorAccumulator?.vendor.id,
+          vendorName: vendorAccumulator?.vendor.name,
+          message:
+            evaluation.message ??
+            (evaluation.missing
+              ? `${definition.label} is missing`
+              : `${definition.label} is invalid`),
+          severity: evaluation.severity ?? (definition.required ? "error" : "warning"),
+          source: "ingestion",
+          observedAt: productTimestamp,
+        };
+
+        syntheticValidationIssues.push(issue);
+        if (accumulator.sampleIssues.length < 3) {
+          accumulator.sampleIssues.push(issue);
+        }
       }
 
       if (vendorAccumulator) {
@@ -676,6 +605,18 @@ export const evaluateCatalogSnapshot = (
         vendorAccumulator.impactedProductIds.add(productId);
       }
     });
+  });
+
+  // Count issues from existing validation records by attribute
+  existingValidationIssues.forEach((issue) => {
+    const accumulator = attributeAccumulators.get(issue.attributeKey);
+    if (accumulator) {
+      if (issue.severity === 'error') {
+        accumulator.invalidCount += 1;
+      } else {
+        accumulator.missingCount += 1;
+      }
+    }
   });
 
   vendors.forEach((vendor) => {
@@ -786,9 +727,12 @@ export const evaluateCatalogSnapshot = (
     return a.name.localeCompare(b.name);
   });
 
+  // Combine existing and synthetic validation issues
+  const allValidationIssues = [...existingValidationIssues, ...syntheticValidationIssues];
+
   const severityRank: Record<CatalogValidationIssue["severity"], number> = { error: 2, warning: 1 };
 
-  validationIssues.sort((a, b) => {
+  allValidationIssues.sort((a, b) => {
     const severityDelta = severityRank[b.severity] - severityRank[a.severity];
     if (severityDelta !== 0) {
       return severityDelta;
@@ -806,8 +750,8 @@ export const evaluateCatalogSnapshot = (
     requiredAttributes: attributeDefinitions.filter((definition) => definition.required).length,
     relationshipAttributes: attributeDefinitions.filter((definition) => definition.relationship).length,
     productCount: totalProducts,
-    validationErrors: validationIssues.filter((issue) => issue.severity === "error").length,
-    validationWarnings: validationIssues.filter((issue) => issue.severity === "warning").length,
+    validationErrors: allValidationIssues.filter((issue) => issue.severity === "error").length,
+    validationWarnings: allValidationIssues.filter((issue) => issue.severity === "warning").length,
     vendorsImpacted: vendorPreviews.filter((vendor) => vendor.pendingIssues > 0).length,
     averageCoverage: attributeStats.length
       ? Math.round(attributeStats.reduce((sum, stat) => sum + stat.coverage, 0) / attributeStats.length)
@@ -819,7 +763,7 @@ export const evaluateCatalogSnapshot = (
     attributeStats,
     attributeGroups,
     vendorPreviews,
-    validationIssues,
+    validationIssues: allValidationIssues,
     datasetSource: dataset.source,
     datasetError: dataset.error,
   } satisfies CatalogSnapshot;
@@ -832,13 +776,14 @@ const fetchCatalogDataset = async (apiClient: Route.LoaderArgs["context"]["api"]
 
   const productManager = (apiClient as { product?: { findMany?: (args: unknown) => Promise<unknown> } }).product;
   const vendorManager = (apiClient as { vendor?: { findMany?: (args: unknown) => Promise<unknown> } }).vendor;
+  const catalogValidationManager = (apiClient as { catalogValidation?: { findMany?: (args: unknown) => Promise<unknown> } }).catalogValidation;
 
   if (!productManager?.findMany || !vendorManager?.findMany) {
     return { ...FALLBACK_DATASET, error: "Product or vendor model not available" };
   }
 
   try {
-    const [productsRaw, vendorsRaw] = await Promise.all([
+    const promises = [
       productManager.findMany({
         select: {
           id: true,
@@ -849,6 +794,7 @@ const fetchCatalogDataset = async (apiClient: Route.LoaderArgs["context"]["api"]
           createdAt: true,
           updatedAt: true,
           order: {
+            id: true,
             orderId: true,
             seller: {
               id: true,
@@ -856,6 +802,10 @@ const fetchCatalogDataset = async (apiClient: Route.LoaderArgs["context"]["api"]
               vendor: {
                 id: true,
                 name: true,
+                city: true,
+                state: true,
+                country: true,
+                updatedAt: true,
               },
             },
           },
@@ -873,16 +823,74 @@ const fetchCatalogDataset = async (apiClient: Route.LoaderArgs["context"]["api"]
           updatedAt: true,
         },
         sort: { name: "Ascending" },
-        first: 100,
+        first: 250,
       }),
-    ]);
+    ];
+
+    // Add catalogValidation fetch if available
+    if (catalogValidationManager?.findMany) {
+      promises.push(
+        catalogValidationManager.findMany({
+          select: {
+            id: true,
+            attributeKey: true,
+            attributeLabel: true,
+            productId: true,
+            productName: true,
+            vendorId: true,
+            vendorName: true,
+            message: { markdown: true, truncatedHTML: true },
+            severity: true,
+            source: true,
+            observedAt: true,
+          },
+          sort: { observedAt: "Descending" },
+          first: 250,
+        })
+      );
+    }
+
+    const results = await Promise.all(promises);
+    const [productsRaw, vendorsRaw, catalogValidationsRaw] = results;
 
     const products = normalizeCollection<NormalizedProduct>(productsRaw);
     const vendors = normalizeCollection<NormalizedVendor>(vendorsRaw);
+    
+    // Process catalog validation issues
+    const validationIssues: CatalogValidationIssue[] = catalogValidationsRaw 
+      ? normalizeCollection<any>(catalogValidationsRaw).map((issue: any) => ({
+          id: issue.id,
+          attributeKey: issue.attributeKey,
+          attributeLabel: issue.attributeLabel,
+          productId: issue.productId,
+          productName: issue.productName,
+          vendorId: issue.vendorId,
+          vendorName: issue.vendorName,
+          message: typeof issue.message === 'object' && issue.message?.markdown 
+            ? issue.message.markdown 
+            : typeof issue.message === 'string' 
+            ? issue.message 
+            : 'Validation error',
+          severity: issue.severity || 'error',
+          source: issue.source || 'ingestion',
+          observedAt: issue.observedAt,
+        } satisfies CatalogValidationIssue))
+      : [];
 
-    return { products, vendors, source: "api" } satisfies CatalogDataset;
+    return { 
+      products, 
+      vendors, 
+      validationIssues,
+      source: "api" 
+    } satisfies CatalogDataset;
   } catch (error) {
-    return { ...FALLBACK_DATASET, error: serializeError(error), source: "fallback" };
+    console.error('Error fetching catalog dataset:', error);
+    return { 
+      ...FALLBACK_DATASET, 
+      validationIssues: [],
+      error: serializeError(error), 
+      source: "fallback" 
+    };
   }
 };
 

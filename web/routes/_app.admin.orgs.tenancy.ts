@@ -119,12 +119,16 @@ const normalizeTenantRoles = (records: any[]): TenantRole[] =>
       const key = String(record?.key ?? "");
       const label = String(record?.label ?? key);
       const id = String(record?.id ?? key);
+      const rawTenantType = guardString(record?.tenantType ?? "").toLowerCase();
+      const tenantType = rawTenantType === "seller" || rawTenantType === "vendor"
+        ? (rawTenantType as TenantType)
+        : deriveTenantTypeFromRoleKey(key);
       return {
         id,
         key,
         label,
         description: record?.description ? String(record.description) : undefined,
-        tenantType: deriveTenantTypeFromRoleKey(key),
+        tenantType,
         default: Boolean(record?.default),
       } satisfies TenantRole;
     })
@@ -159,6 +163,12 @@ const guardString = (value: any, fallback = ""): string => {
 };
 
 const pickRoleId = (record: any): string => {
+  if (typeof record?.tenantRole?.id === "string" && record.tenantRole.id) {
+    return record.tenantRole.id;
+  }
+  if (typeof record?.tenantRole?.key === "string" && record.tenantRole.key) {
+    return record.tenantRole.key;
+  }
   if (typeof record?.roleId === "string" && record.roleId) {
     return record.roleId;
   }
@@ -208,7 +218,11 @@ const normalizeMemberships = (
 
       const roleId = pickRoleId(record);
       const role = roleById.get(roleId) ?? roleByKey.get(roleId);
-      const tenantType = role?.tenantType ?? deriveTenantTypeFromRoleKey(role?.key ?? "");
+      const rawTenantType = guardString(record?.tenantType ?? "").toLowerCase();
+      const tenantType =
+        (rawTenantType === "seller" || rawTenantType === "vendor")
+          ? (rawTenantType as TenantType)
+          : role?.tenantType ?? deriveTenantTypeFromRoleKey(role?.key ?? "");
 
       const invitedAt = guardString(record?.invitedAt ?? record?.createdAt ?? timestampFallback, timestampFallback);
 
@@ -240,7 +254,13 @@ const normalizeWorkspaces = (workspaces: any[], timestampFallback: string): Work
     const label = guardString(workspace?.label ?? workspace?.name ?? `Workspace ${index + 1}`);
     const environment = (guardString(workspace?.environment ?? "prod") as Environment) ?? "prod";
 
-    const onboardingStepsRaw = pluckNodes<any>(workspace?.onboarding?.steps ?? workspace?.onboardingSteps);
+    let onboardingStepsRaw: any[] = [];
+    const onboardingState = workspace?.onboardingState;
+    if (onboardingState && typeof onboardingState === "object" && Array.isArray(onboardingState.steps)) {
+      onboardingStepsRaw = onboardingState.steps;
+    } else {
+      onboardingStepsRaw = pluckNodes<any>(workspace?.onboarding?.steps ?? workspace?.onboardingSteps);
+    }
     const onboardingSteps: OnboardingStep[] = onboardingStepsRaw.map((step, stepIndex) => ({
       id: guardString(step?.id ?? `${id}-step-${stepIndex}`),
       label: guardString(step?.label ?? `Step ${stepIndex + 1}`),
@@ -253,7 +273,10 @@ const normalizeWorkspaces = (workspaces: any[], timestampFallback: string): Work
       environment,
       onboarding: {
         steps: onboardingSteps,
-        updatedAt: guardString(workspace?.updatedAt ?? workspace?.onboarding?.updatedAt ?? timestampFallback, timestampFallback),
+        updatedAt: guardString(
+          workspace?.onboardingUpdatedAt ?? workspace?.updatedAt ?? workspace?.onboarding?.updatedAt ?? timestampFallback,
+          timestampFallback
+        ),
       },
     } satisfies Workspace;
   });
@@ -553,6 +576,17 @@ const buildRemoteSnapshot = async (): Promise<{
             status: true,
             invitedAt: true,
             roles: true,
+            tenantType: true,
+            acceptedAt: true,
+            tenantRole: {
+              select: {
+                id: true,
+                key: true,
+                label: true,
+                tenantType: true,
+                default: true,
+              },
+            },
             user: {
               select: {
                 firstName: true,
@@ -567,6 +601,9 @@ const buildRemoteSnapshot = async (): Promise<{
             label: true,
             environment: true,
             updatedAt: true,
+            domains: true,
+            onboardingState: true,
+            onboardingUpdatedAt: true,
             onboarding: {
               select: {
                 updatedAt: true,
@@ -590,6 +627,7 @@ const buildRemoteSnapshot = async (): Promise<{
         id: true,
         key: true,
         label: true,
+        tenantType: true,
         description: true,
         default: true,
       },
@@ -610,10 +648,8 @@ const buildRemoteSnapshot = async (): Promise<{
     }),
   ]);
 
-  const tenantRoles = tenantRoleRecords.length > 0 ? normalizeTenantRoles(tenantRoleRecords) : placeholderTenantRoles;
-  const organizations = organizationRecords.length > 0
-    ? normalizeOrganizations(organizationRecords, tenantRoles, timestampFallback)
-    : placeholderOrganizations;
+  const tenantRoles = normalizeTenantRoles(tenantRoleRecords);
+  const organizations = normalizeOrganizations(organizationRecords, tenantRoles.length > 0 ? tenantRoles : placeholderTenantRoles, timestampFallback);
 
   const vendorCandidates = createTenantCandidatesFromVendors(vendorRecords);
   const sellerCandidates = createTenantCandidatesFromSellers(sellerRecords);
@@ -623,8 +659,8 @@ const buildRemoteSnapshot = async (): Promise<{
 
   return {
     organizations,
-    tenantRoles,
-    availableTenants: availableTenants.length > 0 ? availableTenants : placeholderTenantPool,
+    tenantRoles: tenantRoles.length > 0 ? tenantRoles : placeholderTenantRoles,
+    availableTenants,
     error,
   };
 };

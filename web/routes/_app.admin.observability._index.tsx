@@ -1,805 +1,628 @@
+import { useMemo, type ReactNode } from "react";
+import type { Route } from "./+types/_app.admin.observability._index";
 import { PageHeader } from "@/components/app/page-header";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Activity, AlertTriangle, BarChart3, ShieldCheck } from "lucide-react";
 
-type StatusToken = "healthy" | "watch" | "critical" | "maintenance";
-type TrendToken = "positive" | "negative" | "neutral";
-
-const STATUS_BADGE_CLASSES: Record<StatusToken, string> = {
-  healthy: "border-emerald-200 bg-emerald-100 text-emerald-700",
-  watch: "border-amber-200 bg-amber-100 text-amber-700",
-  critical: "border-rose-200 bg-rose-100 text-rose-700",
-  maintenance: "border-slate-200 bg-slate-100 text-slate-700",
-};
-
-const STATUS_LABELS: Record<StatusToken, string> = {
-  healthy: "Healthy",
-  watch: "Watch",
-  critical: "Critical",
-  maintenance: "Maintenance",
-};
-
-type SummaryMetric = {
+type ServiceMetricRecord = {
   id: string;
-  label: string;
-  value: string;
-  change: string;
-  trend: TrendToken;
-  window: string;
+  serviceName: string;
+  metric: string;
+  currentValue?: number;
+  target?: number;
+  unit?: string;
+  direction?: "up" | "down";
+  capturedAt?: string;
 };
 
-type ObservabilityDiscipline = "logs" | "metrics" | "traces";
-
-type TelemetryStream = {
+type AlertRecord = {
   id: string;
-  name: string;
-  status: StatusToken;
-  signal: string;
-  window: string;
-  volume: string;
-  lastChange: string;
-  owner: string;
-  runbook: string;
-  notes: string;
-};
-
-type StackIntegration = {
-  id: string;
-  tool: string;
-  focus: string;
-  coverage: string[];
-  status: StatusToken;
-  lastHeartbeat: string;
-  dashboards: string[];
-  owner: string;
-  runbook: string;
-};
-
-type DomainSlo = {
-  id: string;
-  domain: string;
-  indicator: string;
-  target: string;
-  actual: string;
-  window: string;
-  status: StatusToken;
-  burnRate: string;
-  notes: string;
-};
-
-type SeverityToken = "critical" | "high" | "warning";
-
-type AlertStream = {
-  id: string;
-  name: string;
-  severity: SeverityToken;
-  condition: string;
-  route: string[];
-  status: StatusToken;
-  onCall: string;
-  lastTriggered: string;
-  notes: string;
-};
-
-type EscalationLayer = {
-  id: string;
-  level: string;
-  scope: string;
-  actions: string[];
-  response: string;
-  owner: string;
+  serviceName: string;
+  type?: string;
+  severity: "critical" | "high" | "warning";
+  status: "open" | "acknowledged" | "resolved";
+  openedAt?: string;
+  acknowledgedAt?: string;
+  resolvedAt?: string;
+  runbookUrl?: string;
+  summary?: string;
 };
 
 type IncidentRecord = {
   id: string;
   title: string;
-  startedAt: string;
-  duration: string;
-  impact: string;
-  status: string;
-  runbook: string;
-  summary: string;
-  followUp: string[];
+  status: "open" | "monitoring" | "resolved";
+  severity: string;
+  startedAt?: string;
+  resolvedAt?: string;
+  summary?: string;
+  postmortemUrl?: string;
 };
 
-const SUMMARY_METRICS: SummaryMetric[] = [
-  {
-    id: "log-volume",
-    label: "Log volume (24h)",
-    value: "4.3M events",
-    change: "+12% vs prior window",
-    trend: "positive",
-    window: "Last 24 hours",
-  },
-  {
-    id: "alert-mttr",
-    label: "Alert MTTR",
-    value: "11 minutes",
-    change: "-3m vs trailing week",
-    trend: "positive",
-    window: "Critical and high alerts",
-  },
-  {
-    id: "trace-coverage",
-    label: "Trace coverage",
-    value: "87% of control plane calls",
-    change: "+4 pts vs target",
-    trend: "positive",
-    window: "Primary services",
-  },
-  {
-    id: "slo-burn",
-    label: "Error budget burn",
-    value: "0.6x",
-    change: "-0.2x vs 28d avg",
-    trend: "positive",
-    window: "Rolling 7 day",
-  },
-];
+type LogForwarderRecord = {
+  id: string;
+  destination: string;
+  provider?: string;
+  status: "healthy" | "degraded" | "failed";
+  lastHeartbeatAt?: string;
+  notes?: string;
+};
 
-const TELEMETRY_PANELS: Record<ObservabilityDiscipline, TelemetryStream[]> = {
-  logs: [
-    {
-      id: "ingress",
-      name: "Ingress service",
-      status: "watch",
-      signal: "5xx rate > 0.8% (5m)",
-      window: "Datadog monitor",
-      volume: "168k events per hour",
-      lastChange: "Alert cleared 14 minutes ago",
-      owner: "Platform on-call",
-      runbook: "docs/runbooks/ingress-errors.md",
-      notes: "Retry storm detected from NA dispatch nodes. Rate limited at the edge while fix rolls out.",
-    },
-    {
-      id: "print-workers",
-      name: "Print workers",
-      status: "healthy",
-      signal: "Job failure < 0.2% (15m)",
-      window: "Grafana Loki",
-      volume: "92k events per hour",
-      lastChange: "No anomalies in 36 hours",
-      owner: "Print operations",
-      runbook: "docs/runbooks/print-worker-retries.md",
-      notes: "Sampled logs shipped to S3 for cold retention after 30 days.",
-    },
-    {
-      id: "finance-ledger",
-      name: "Finance ledger",
-      status: "healthy",
-      signal: "Reconciliation errors",
-      window: "Loki query alerts",
-      volume: "41k events per hour",
-      lastChange: "Last action 2 days ago",
-      owner: "Finance engineering",
-      runbook: "docs/runbooks/finance-ledger.md",
-      notes: "Ledger reconciliation alerts auto-sync to Jira FIN-Alerts board.",
-    },
-  ],
+type LoaderData = {
+  metrics: ServiceMetricRecord[];
+  alerts: AlertRecord[];
+  incidents: IncidentRecord[];
+  forwarders: LogForwarderRecord[];
+  source: "api" | "fallback";
+  error?: string;
+};
+
+const FALLBACK_DATA: LoaderData = {
   metrics: [
     {
-      id: "control-plane-latency",
-      name: "Control plane latency",
-      status: "watch",
-      signal: "p95 > 1.8s (1h burn 14d)",
-      window: "Datadog SLO",
-      volume: "32k requests per minute",
-      lastChange: "SLO warning fired 28 minutes ago",
-      owner: "Platform SRE",
-      runbook: "docs/runbooks/control-plane-latency.md",
-      notes: "Synthetic checks from iad and dub agree with elevated latency.",
+      id: "metric-qps",
+      serviceName: "Control plane",
+      metric: "p95 latency",
+      currentValue: 1.6,
+      target: 1.2,
+      unit: "s",
+      direction: "down",
+      capturedAt: "2025-02-18T14:30:00Z",
     },
     {
-      id: "print-success",
-      name: "Print job success",
-      status: "healthy",
-      signal: "Success >= 99.5% (day)",
-      window: "Grafana dashboard",
-      volume: "11.4k jobs per hour",
-      lastChange: "Healthy since 2025-02-16",
-      owner: "Print operations",
-      runbook: "docs/runbooks/print-job-health.md",
-      notes: "Alert pairs with escalation matrix level L2 when burn rate > 2x.",
+      id: "metric-print-success",
+      serviceName: "Print workers",
+      metric: "Job success",
+      currentValue: 99.4,
+      target: 99.5,
+      unit: "%",
+      direction: "up",
+      capturedAt: "2025-02-18T14:00:00Z",
     },
     {
-      id: "finance-clearing",
-      name: "Finance clearing backlog",
-      status: "critical",
-      signal: "Queue depth > 750 (15m)",
-      window: "Grafana cloud",
-      volume: "3.2k settlements per hour",
-      lastChange: "Escalation triggered 6 minutes ago",
-      owner: "Finance engineering",
-      runbook: "docs/runbooks/finance-clearing-backlog.md",
-      notes: "Failover to backup clearinghouse in progress, track incident OMS-427.",
+      id: "metric-ledger",
+      serviceName: "Finance ledger",
+      metric: "Reconciliation failures",
+      currentValue: 2,
+      target: 0,
+      unit: "", 
+      direction: "down",
+      capturedAt: "2025-02-18T14:00:00Z",
     },
   ],
-  traces: [
+  alerts: [
     {
-      id: "order-lifecycle",
-      name: "Order lifecycle",
-      status: "healthy",
-      signal: "Trace coverage 93%",
-      window: "Honeycomb board",
-      volume: "14k traces per hour",
-      lastChange: "No missing spans detected in 48 hours",
-      owner: "Platform observability",
-      runbook: "docs/runbooks/order-lifecycle-tracing.md",
-      notes: "Critical path spans annotated with tenant and region dimensions.",
+      id: "alert-ingress",
+      serviceName: "Ingress service",
+      severity: "high",
+      status: "open",
+      openedAt: "2025-02-18T13:40:00Z",
+      summary: "5xx rate > 0.8% across NA region",
+      runbookUrl: "docs/runbooks/ingress-errors.md",
     },
     {
-      id: "shipping-label",
-      name: "Shipping label generation",
-      status: "watch",
-      signal: "Span error ratio 0.6%",
-      window: "Honeycomb",
-      volume: "9.2k traces per hour",
-      lastChange: "Instrumented new carrier adapter 3 hours ago",
-      owner: "Shipping squad",
-      runbook: "docs/runbooks/shipping-latency.md",
-      notes: "Carrier SLA breaches link back to this trace using trace_id tag.",
-    },
-    {
-      id: "finance-settlement",
-      name: "Finance settlement pipeline",
-      status: "critical",
-      signal: "Missing spans for ledger-writer",
-      window: "OpenTelemetry collector",
-      volume: "4.6k traces per hour",
-      lastChange: "Collector restart under investigation",
-      owner: "Finance engineering",
-      runbook: "docs/runbooks/tracing-pipeline.md",
-      notes: "Traces dropping at 14%. Check OTLP exporter queue depth metrics.",
+      id: "alert-print",
+      serviceName: "Print workers",
+      severity: "warning",
+      status: "acknowledged",
+      openedAt: "2025-02-18T12:55:00Z",
+      acknowledgedAt: "2025-02-18T13:05:00Z",
+      summary: "Job retries exceeding SLA",
+      runbookUrl: "docs/runbooks/print-worker-retries.md",
     },
   ],
+  incidents: [
+    {
+      id: "incident-ops-142",
+      title: "Print routing backlog",
+      severity: "sev2",
+      status: "open",
+      startedAt: "2025-02-18T12:15:00Z",
+      summary: "Routing queue lagged >18m impacting EU dropship",
+    },
+    {
+      id: "incident-ledger-38",
+      title: "Finance ledger replay",
+      severity: "sev3",
+      status: "monitoring",
+      startedAt: "2025-02-17T21:00:00Z",
+      resolvedAt: "2025-02-17T22:45:00Z",
+      summary: "Ledger reindex completed; monitoring postmortem prep",
+    },
+  ],
+  forwarders: [
+    {
+      id: "forwarder-loki",
+      destination: "Grafana Loki",
+      provider: "Grafana Cloud",
+      status: "healthy",
+      lastHeartbeatAt: "2025-02-18T14:58:00Z",
+      notes: "99.9% delivery, 3-hour retention",
+    },
+    {
+      id: "forwarder-s3",
+      destination: "S3 cold storage",
+      provider: "AWS",
+      status: "degraded",
+      lastHeartbeatAt: "2025-02-18T10:20:00Z",
+      notes: "Delayed uploads due to batch retry",
+    },
+    {
+      id: "forwarder-splunk",
+      destination: "Splunk Cloud",
+      provider: "Splunk",
+      status: "failed",
+      lastHeartbeatAt: "2025-02-18T07:05:00Z",
+      notes: "Token expired; rotation pending",
+    },
+  ],
+  source: "fallback",
 };
 
-const STACK_INTEGRATIONS: StackIntegration[] = [
-  {
-    id: "grafana",
-    tool: "Grafana Cloud",
-    focus: "Dashboards and SLOs",
-    coverage: ["Production", "Staging"],
-    status: "healthy",
-    lastHeartbeat: "Synced 3 minutes ago",
-    dashboards: [
-      "OMS Control Plane",
-      "Print Operations",
-      "Finance Clearing",
-    ],
-    owner: "Platform observability",
-    runbook: "docs/integrations/grafana.md",
-  },
-  {
-    id: "datadog",
-    tool: "Datadog",
-    focus: "Metrics and monitors",
-    coverage: ["Production", "QA"],
-    status: "watch",
-    lastHeartbeat: "API quota at 78% (resets midnight UTC)",
-    dashboards: [
-      "Control Plane Latency Monitor",
-      "Dispatch Synthetic Checks",
-    ],
-    owner: "SRE guild",
-    runbook: "docs/integrations/datadog.md",
-  },
-  {
-    id: "honeycomb",
-    tool: "Honeycomb",
-    focus: "Distributed tracing",
-    coverage: ["Production"],
-    status: "healthy",
-    lastHeartbeat: "Collector heartbeats at 100%",
-    dashboards: ["Order Lifecycle", "Finance Settlement"],
-    owner: "Platform observability",
-    runbook: "docs/integrations/honeycomb.md",
-  },
-  {
-    id: "pagerduty",
-    tool: "PagerDuty",
-    focus: "Alert routing",
-    coverage: ["Production"],
-    status: "maintenance",
-    lastHeartbeat: "Change freeze scheduled 2025-02-22",
-    dashboards: ["OMS Primary", "Finance On-call"],
-    owner: "Incident response",
-    runbook: "docs/integrations/pagerduty.md",
-  },
-];
-
-const DOMAIN_SLOS: DomainSlo[] = [
-  {
-    id: "print-slo",
-    domain: "Print",
-    indicator: "Label generation success",
-    target: "99.5%",
-    actual: "99.1%",
-    window: "28 day rolling",
-    status: "watch",
-    burnRate: "1.4x (fast lane)",
-    notes: "Retry queue drain is slowing in us-east-1. Tracking incident OMS-427 for risk reduction.",
-  },
-  {
-    id: "shipping-slo",
-    domain: "Shipping",
-    indicator: "Carrier API latency p95",
-    target: "< 1.2 s",
-    actual: "0.9 s",
-    window: "7 day rolling",
-    status: "healthy",
-    burnRate: "0.4x",
-    notes: "Carrier failover runbook executed 2025-02-16 to add UPS backup. Synthetic checks green.",
-  },
-  {
-    id: "finance-slo",
-    domain: "Finance",
-    indicator: "Settlement completion in 30m",
-    target: "99%",
-    actual: "96%",
-    window: "14 day rolling",
-    status: "critical",
-    burnRate: "2.8x",
-    notes: "Clearing backlog runbook live. Finance on-call coordinating with clearinghouse vendor.",
-  },
-];
-
-const SEVERITY_BADGE_CLASSES: Record<SeverityToken, string> = {
-  critical: "border-rose-300 bg-rose-100 text-rose-700",
-  high: "border-orange-300 bg-orange-100 text-orange-700",
-  warning: "border-amber-200 bg-amber-100 text-amber-700",
+const serializeError = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return "Unknown error";
+  }
 };
 
-const ALERT_STREAMS: AlertStream[] = [
-  {
-    id: "control-plane",
-    name: "Control plane latency > 2s (5m)",
-    severity: "critical",
-    condition: "Datadog burn-rate 14d/1h > 1",
-    route: ["PagerDuty: OMS Primary", "Slack: #oms-alerts"],
-    status: "watch",
-    onCall: "Priya (Week 8 rotation)",
-    lastTriggered: "Active, acknowledged 4 minutes ago",
-    notes: "Escalates to duty manager if unacked for 10 minutes.",
-  },
-  {
-    id: "print-error",
-    name: "Print job failure > 0.5%",
-    severity: "high",
-    condition: "Grafana alert rule OMS-print-errors",
-    route: ["PagerDuty: Print Secondary", "Email: print-ops@omspoint.com"],
-    status: "healthy",
-    onCall: "Marcus",
-    lastTriggered: "Resolved 2025-02-16 06:22 UTC",
-    notes: "Auto-triggers backlog cleanup workflow when open > 30 minutes.",
-  },
-  {
-    id: "finance-backlog",
-    name: "Finance clearing backlog > 500",
-    severity: "critical",
-    condition: "Grafana dashboard panel threshold",
-    route: ["PagerDuty: Finance Primary", "Slack: #finance-ops"],
-    status: "critical",
-    onCall: "Lena",
-    lastTriggered: "Firing since 6 minutes",
-    notes: "Coordinates with clearinghouse vendor MajorSupport within 15 minutes.",
-  },
-];
+const guardNumber = (value: unknown): number | undefined => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+};
 
-const ESCALATION_MATRIX: EscalationLayer[] = [
-  {
-    id: "l1",
-    level: "L1",
-    scope: "PagerDuty OMS Primary",
-    actions: ["Acknowledge alert", "Engage responder in Slack"],
-    response: "5 minutes",
-    owner: "On-call engineer",
-  },
-  {
-    id: "l2",
-    level: "L2",
-    scope: "Domain specialist",
-    actions: ["Loop in domain channel", "Review domain runbook"],
-    response: "10 minutes",
-    owner: "Domain lead",
-  },
-  {
-    id: "l3",
-    level: "L3",
-    scope: "Incident commander",
-    actions: ["Open incident bridge", "Notify duty manager"],
-    response: "15 minutes",
-    owner: "Incident response lead",
-  },
-];
+const guardString = (value: unknown): string | undefined => {
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value;
+  }
+  return undefined;
+};
 
-const INCIDENT_HISTORY: IncidentRecord[] = [
-  {
-    id: "oms-422",
-    title: "Print queue saturation",
-    startedAt: "2025-02-12 11:45 UTC",
-    duration: "Mitigated in 32 minutes",
-    impact: "Print jobs across NA region delayed up to 18 minutes.",
-    status: "Postmortem scheduled",
-    runbook: "docs/runbooks/print-queue-saturation.md",
-    summary: "Kafka partition imbalance after deployment reduced consumer throughput.",
-    followUp: [
-      "Auto scale print-worker consumer group when lag > 5k",
-      "Add alert for partition skew > 30%",
-    ],
-  },
-  {
-    id: "oms-427",
-    title: "Finance clearing backlog",
-    startedAt: "2025-02-18 04:12 UTC",
-    duration: "Ongoing",
-    impact: "Settlement queue exceeded 850 pending transactions.",
-    status: "Active incident",
-    runbook: "docs/runbooks/finance-clearing-backlog.md",
-    summary: "Downstream clearinghouse applying manual verification gates causing retries.",
-    followUp: [
-      "Coordinate vendor maintenance window for bulk replay",
-      "Publish customer comms template for finance delays",
-    ],
-  },
-  {
-    id: "oms-415",
-    title: "Dispatch webhook delivery failures",
-    startedAt: "2025-01-29 17:06 UTC",
-    duration: "Resolved in 26 minutes",
-    impact: "Dispatch updates retried for 3 high-volume tenants.",
-    status: "Closed",
-    runbook: "docs/runbooks/webhook-delivery.md",
-    summary: "Expired TLS certificate on webhook proxy caused 401 responses from partner.",
-    followUp: [
-      "Automate certificate renewal via ACM",
-      "Add canary webhook to detect 4xx spikes",
-    ],
-  },
-];
+const formatDateTime = (value?: string) => {
+  if (!value) {
+    return "—";
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "—";
+  }
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "UTC",
+  }).format(parsed);
+};
 
-export default function AdminObservabilityPage() {
+export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderData> => {
+  const api = context.api as Record<string, any> | undefined;
+  const metricManager = api?.serviceMetric?.findMany;
+  const alertManager = api?.alert?.findMany;
+  const incidentManager = api?.incident?.findMany;
+  const forwarderManager = api?.logForwarder?.findMany;
+
+  if (!metricManager || !alertManager || !incidentManager || !forwarderManager) {
+    return { ...FALLBACK_DATA, error: "Observability models not available in API client." };
+  }
+
+  try {
+    const [metricsRaw, alertsRaw, incidentsRaw, forwardersRaw] = await Promise.all([
+      metricManager({
+        select: {
+          id: true,
+          serviceName: true,
+          metric: true,
+          currentValue: true,
+          target: true,
+          unit: true,
+          direction: true,
+          capturedAt: true,
+        },
+        sort: { capturedAt: "Descending" },
+        first: 25,
+      }),
+      alertManager({
+        select: {
+          id: true,
+          serviceName: true,
+          type: true,
+          severity: true,
+          status: true,
+          openedAt: true,
+          acknowledgedAt: true,
+          resolvedAt: true,
+          runbookUrl: true,
+          summary: true,
+        },
+        sort: { openedAt: "Descending" },
+        first: 25,
+      }),
+      incidentManager({
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          severity: true,
+          startedAt: true,
+          resolvedAt: true,
+          summary: true,
+          postmortemUrl: true,
+        },
+        sort: { startedAt: "Descending" },
+        first: 25,
+      }),
+      forwarderManager({
+        select: {
+          id: true,
+          destination: true,
+          provider: true,
+          status: true,
+          lastHeartbeatAt: true,
+          notes: true,
+        },
+        sort: { destination: "Ascending" },
+        first: 25,
+      }),
+    ]);
+
+    const metrics: ServiceMetricRecord[] = (Array.isArray(metricsRaw) ? metricsRaw : []).map((record, index) => ({
+      id: guardString(record?.id) ?? `metric-${index}`,
+      serviceName: guardString(record?.serviceName) ?? "Unknown service",
+      metric: guardString(record?.metric) ?? "Metric",
+      currentValue: guardNumber(record?.currentValue),
+      target: guardNumber(record?.target),
+      unit: guardString(record?.unit),
+      direction: record?.direction === "down" ? "down" : "up",
+      capturedAt: guardString(record?.capturedAt),
+    }));
+
+    const alerts: AlertRecord[] = (Array.isArray(alertsRaw) ? alertsRaw : []).map((record, index) => ({
+      id: guardString(record?.id) ?? `alert-${index}`,
+      serviceName: guardString(record?.serviceName) ?? "Service",
+      type: guardString(record?.type),
+      severity: (record?.severity === "critical" || record?.severity === "high" ? record.severity : "warning") as AlertRecord["severity"],
+      status:
+        record?.status === "acknowledged" || record?.status === "resolved" ? record.status : "open",
+      openedAt: guardString(record?.openedAt),
+      acknowledgedAt: guardString(record?.acknowledgedAt),
+      resolvedAt: guardString(record?.resolvedAt),
+      runbookUrl: guardString(record?.runbookUrl),
+      summary: guardString(record?.summary),
+    }));
+
+    const incidents: IncidentRecord[] = (Array.isArray(incidentsRaw) ? incidentsRaw : []).map((record, index) => ({
+      id: guardString(record?.id) ?? `incident-${index}`,
+      title: guardString(record?.title) ?? "Incident",
+      status: (record?.status === "resolved" || record?.status === "monitoring" ? record.status : "open") as IncidentRecord["status"],
+      severity: guardString(record?.severity) ?? "sev3",
+      startedAt: guardString(record?.startedAt),
+      resolvedAt: guardString(record?.resolvedAt),
+      summary: guardString(record?.summary),
+      postmortemUrl: guardString(record?.postmortemUrl),
+    }));
+
+    const forwarders: LogForwarderRecord[] = (Array.isArray(forwardersRaw) ? forwardersRaw : []).map((record, index) => ({
+      id: guardString(record?.id) ?? `forwarder-${index}`,
+      destination: guardString(record?.destination) ?? "Destination",
+      provider: guardString(record?.provider),
+      status:
+        record?.status === "degraded" || record?.status === "failed" ? record.status : "healthy",
+      lastHeartbeatAt: guardString(record?.lastHeartbeatAt),
+      notes: guardString(record?.notes),
+    }));
+
+    return {
+      metrics,
+      alerts,
+      incidents,
+      forwarders,
+      source: "api",
+    } satisfies LoaderData;
+  } catch (error) {
+    return {
+      ...FALLBACK_DATA,
+      error: serializeError(error),
+    } satisfies LoaderData;
+  }
+};
+
+const formatValue = (metric: ServiceMetricRecord) => {
+  if (typeof metric.currentValue === "number") {
+    if (metric.unit === "%") {
+      return `${metric.currentValue.toFixed(2)}%`;
+    }
+    if (metric.unit) {
+      return `${metric.currentValue}${metric.unit}`;
+    }
+    return metric.currentValue.toFixed(2);
+  }
+  return "—";
+};
+
+const severityTone: Record<AlertRecord["severity"], string> = {
+  critical: "border-rose-200 bg-rose-50 text-rose-700",
+  high: "border-orange-200 bg-orange-50 text-orange-700",
+  warning: "border-amber-200 bg-amber-50 text-amber-700",
+};
+
+const forwarderTone: Record<LogForwarderRecord["status"], string> = {
+  healthy: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  degraded: "border-amber-200 bg-amber-50 text-amber-700",
+  failed: "border-rose-200 bg-rose-50 text-rose-700",
+};
+
+export default function ObservabilityPage({ loaderData }: Route.ComponentProps) {
+  const { metrics, alerts, incidents, forwarders, source, error } = loaderData;
+
+  const summary = useMemo(() => {
+    const openAlerts = alerts.filter((alert) => alert.status === "open");
+    const activeIncidents = incidents.filter((incident) => incident.status !== "resolved");
+    const failingForwarders = forwarders.filter((forwarder) => forwarder.status !== "healthy");
+
+    return {
+      metrics: metrics.length,
+      openAlerts: openAlerts.length,
+      activeIncidents: activeIncidents.length,
+      forwarderIssues: failingForwarders.length,
+    };
+  }, [alerts, incidents, forwarders, metrics]);
+
+  const defaultTab = metrics[0]?.id ?? "metrics";
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Observability"
-        description="Track logs, metrics, traces, and alerts powering the OMS control plane."
+        title="Observability dashboard"
+        description="Operational signal across services, alerting, and incident workflows."
       />
 
+      {error && source === "fallback" ? (
+        <Alert variant="destructive">
+          <AlertTitle>Using sample telemetry</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {SUMMARY_METRICS.map((metric) => (
-          <Card key={metric.id}>
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {metric.label}
-              </CardTitle>
-              <div className="text-2xl font-semibold text-foreground">{metric.value}</div>
-            </CardHeader>
-            <CardContent className="text-xs text-muted-foreground">
-              <div className="flex items-center justify-between">
-                <span>{metric.window}</span>
-                <span
-                  className={cn(
-                    metric.trend === "positive" && "text-emerald-600",
-                    metric.trend === "negative" && "text-rose-600",
-                    metric.trend === "neutral" && "text-muted-foreground",
-                    "font-medium"
-                  )}
-                >
-                  {metric.change}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <SummaryCard icon={<BarChart3 className="h-5 w-5 text-blue-600" />} label="Service metrics" value={summary.metrics} subtext="Signals tracked" />
+        <SummaryCard icon={<AlertTriangle className="h-5 w-5 text-amber-600" />} label="Open alerts" value={summary.openAlerts} subtext="Attention required" />
+        <SummaryCard icon={<Activity className="h-5 w-5 text-red-600" />} label="Active incidents" value={summary.activeIncidents} subtext="Response in-flight" />
+        <SummaryCard icon={<ShieldCheck className="h-5 w-5 text-emerald-600" />} label="Forwarder health" value={`${forwarders.length - summary.forwarderIssues}/${forwarders.length}`} subtext="Healthy destinations" />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Telemetry coverage</CardTitle>
-          <CardDescription>
-            Cross-check the critical signals across logs, metrics, and traces. Align runbooks with the
-            observed health state.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Tabs defaultValue="logs" className="space-y-4">
-            <TabsList className="w-full justify-start gap-2 overflow-x-auto">
-              <TabsTrigger value="logs">Logs</TabsTrigger>
-              <TabsTrigger value="metrics">Metrics</TabsTrigger>
-              <TabsTrigger value="traces">Traces</TabsTrigger>
-            </TabsList>
-            {(Object.keys(TELEMETRY_PANELS) as ObservabilityDiscipline[]).map((discipline) => (
-              <TabsContent key={discipline} value={discipline} className="space-y-4">
-                <Table>
-                  <TableHeader>
+      <Tabs defaultValue={defaultTab} className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="metrics">Service metrics</TabsTrigger>
+          <TabsTrigger value="alerts">Alerts</TabsTrigger>
+          <TabsTrigger value="incidents">Incidents</TabsTrigger>
+          <TabsTrigger value="forwarders">Log forwarders</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="metrics">
+          <Card>
+            <CardHeader>
+              <CardTitle>Live service metrics</CardTitle>
+              <CardDescription>Current telemetry compared to targets.</CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Metric</TableHead>
+                    <TableHead>Value</TableHead>
+                    <TableHead>Target</TableHead>
+                    <TableHead>Captured</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {metrics.length === 0 ? (
                     <TableRow>
-                      <TableHead className="w-1/4">Stream</TableHead>
-                      <TableHead>Signal</TableHead>
-                      <TableHead className="hidden lg:table-cell">Window</TableHead>
-                      <TableHead className="hidden xl:table-cell">Volume</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="hidden xl:table-cell">Runbook</TableHead>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        No service metrics available.
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {TELEMETRY_PANELS[discipline].map((stream) => (
-                      <TableRow key={stream.id}>
+                  ) : (
+                    metrics.map((metric) => (
+                      <TableRow key={metric.id}>
+                        <TableCell>{metric.serviceName}</TableCell>
+                        <TableCell>{metric.metric}</TableCell>
+                        <TableCell>{formatValue(metric)}</TableCell>
+                        <TableCell>{typeof metric.target === "number" ? metric.target : "—"}</TableCell>
+                        <TableCell>{formatDateTime(metric.capturedAt)}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="alerts">
+          <Card>
+            <CardHeader>
+              <CardTitle>Alert queue</CardTitle>
+              <CardDescription>Active monitors and recent acknowledgements.</CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Severity</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Opened</TableHead>
+                    <TableHead>Runbook</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {alerts.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        No alerts firing.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    alerts.map((alert) => (
+                      <TableRow key={alert.id}>
                         <TableCell>
-                          <div className="font-medium text-foreground">{stream.name}</div>
-                          <div className="text-xs text-muted-foreground">{stream.owner}</div>
+                          <div className="font-medium">{alert.serviceName}</div>
+                          <div className="text-xs text-muted-foreground">{alert.summary ?? ""}</div>
                         </TableCell>
                         <TableCell>
-                          <div className="text-sm text-foreground">{stream.signal}</div>
-                          <div className="text-xs text-muted-foreground">{stream.notes}</div>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                          {stream.window}
-                        </TableCell>
-                        <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
-                          {stream.volume}
-                        </TableCell>
-                        <TableCell className="space-y-1">
-                          <Badge
-                            variant="outline"
-                            className={cn("w-fit", STATUS_BADGE_CLASSES[stream.status])}
-                          >
-                            {STATUS_LABELS[stream.status]}
+                          <Badge variant="outline" className={`${severityTone[alert.severity]} capitalize`}>
+                            {alert.severity}
                           </Badge>
-                          <div className="text-xs text-muted-foreground">{stream.lastChange}</div>
                         </TableCell>
-                        <TableCell className="hidden xl:table-cell text-xs text-muted-foreground">
-                          {stream.runbook}
+                        <TableCell className="capitalize">{alert.status}</TableCell>
+                        <TableCell>{formatDateTime(alert.openedAt)}</TableCell>
+                        <TableCell>
+                          {alert.runbookUrl ? (
+                            <a href={alert.runbookUrl} className="text-sm text-blue-600 underline">
+                              Runbook
+                            </a>
+                          ) : (
+                            "—"
+                          )}
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </CardContent>
-      </Card>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Observability stack</CardTitle>
-          <CardDescription>
-            Integrate with Grafana, Datadog, Honeycomb, and PagerDuty to keep the OMS control plane visible end to
-            end.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-1/5">Tool</TableHead>
-                <TableHead>Focus</TableHead>
-                <TableHead>Coverage</TableHead>
-                <TableHead className="hidden lg:table-cell">Dashboards</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden xl:table-cell">Owner</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {STACK_INTEGRATIONS.map((integration) => (
-                <TableRow key={integration.id}>
-                  <TableCell className="font-medium text-foreground">{integration.tool}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{integration.focus}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {integration.coverage.join(", ")}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                    <div className="space-y-1">
-                      {integration.dashboards.map((dashboard) => (
-                        <div key={dashboard}>{dashboard}</div>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell className="space-y-1">
-                    <Badge
-                      variant="outline"
-                      className={cn("w-fit", STATUS_BADGE_CLASSES[integration.status])}
-                    >
-                      {STATUS_LABELS[integration.status]}
-                    </Badge>
-                    <div className="text-xs text-muted-foreground">{integration.lastHeartbeat}</div>
-                    <div className="text-xs text-muted-foreground">Runbook: {integration.runbook}</div>
-                  </TableCell>
-                  <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
-                    {integration.owner}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>SLIs and SLOs by domain</CardTitle>
-          <CardDescription>
-            Surface the control signals for print, shipping, and finance so the right teams can react before breach.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-1/6">Domain</TableHead>
-                <TableHead>Indicator</TableHead>
-                <TableHead>Target</TableHead>
-                <TableHead>Actual</TableHead>
-                <TableHead>Burn rate</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {DOMAIN_SLOS.map((slo) => (
-                <TableRow key={slo.id}>
-                  <TableCell className="font-medium text-foreground">{slo.domain}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    <div>{slo.indicator}</div>
-                    <div className="text-xs text-muted-foreground">{slo.notes}</div>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{slo.target}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{slo.actual}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{slo.burnRate}</TableCell>
-                  <TableCell className="space-y-1">
-                    <Badge variant="outline" className={cn("w-fit", STATUS_BADGE_CLASSES[slo.status])}>
-                      {STATUS_LABELS[slo.status]}
-                    </Badge>
-                    <div className="text-xs text-muted-foreground">{slo.window}</div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Alert routing and escalation</CardTitle>
-          <CardDescription>Define where alerts land and how the incident escalates when response lags.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6 lg:grid-cols-2">
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">Active alert streams</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-1/3">Alert</TableHead>
-                  <TableHead>Route</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {ALERT_STREAMS.map((alert) => (
-                  <TableRow key={alert.id}>
-                    <TableCell>
-                      <div className="font-medium text-foreground">{alert.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {alert.condition}
-                      </div>
-                      <div className="text-xs text-muted-foreground">{alert.notes}</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={cn("mb-2 w-fit", SEVERITY_BADGE_CLASSES[alert.severity])}
-                      >
-                        {alert.severity.toUpperCase()}
-                      </Badge>
-                      <div className="space-y-1 text-xs text-muted-foreground">
-                        {alert.route.map((step) => (
-                          <div key={step}>{step}</div>
-                        ))}
-                        <div className="font-medium text-foreground">On-call: {alert.onCall}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="space-y-1">
-                      <Badge variant="outline" className={cn("w-fit", STATUS_BADGE_CLASSES[alert.status])}>
-                        {STATUS_LABELS[alert.status]}
-                      </Badge>
-                      <div className="text-xs text-muted-foreground">{alert.lastTriggered}</div>
-                    </TableCell>
+        <TabsContent value="incidents">
+          <Card>
+            <CardHeader>
+              <CardTitle>Incident response</CardTitle>
+              <CardDescription>Recent incident activity with follow-ups.</CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Severity</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Started</TableHead>
+                    <TableHead>Resolved</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {incidents.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        No incidents recorded.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    incidents.map((incident) => (
+                      <TableRow key={incident.id}>
+                        <TableCell>
+                          <div className="font-medium">{incident.title}</div>
+                          <div className="text-xs text-muted-foreground">{incident.summary ?? ""}</div>
+                        </TableCell>
+                        <TableCell>{incident.severity}</TableCell>
+                        <TableCell className="capitalize">{incident.status}</TableCell>
+                        <TableCell>{formatDateTime(incident.startedAt)}</TableCell>
+                        <TableCell>{formatDateTime(incident.resolvedAt)}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">Escalation matrix</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-1/6">Level</TableHead>
-                  <TableHead>Scope</TableHead>
-                  <TableHead>Actions</TableHead>
-                  <TableHead>Response</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {ESCALATION_MATRIX.map((layer) => (
-                  <TableRow key={layer.id}>
-                    <TableCell className="font-medium text-foreground">{layer.level}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      <div>{layer.scope}</div>
-                      <div className="text-xs text-muted-foreground">Owner: {layer.owner}</div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      <ul className="list-disc pl-4">
-                        {layer.actions.map((action) => (
-                          <li key={action}>{action}</li>
-                        ))}
-                      </ul>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{layer.response}</TableCell>
+        <TabsContent value="forwarders">
+          <Card>
+            <CardHeader>
+              <CardTitle>Log forwarders</CardTitle>
+              <CardDescription>Destination health for log shipping pipelines.</CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Destination</TableHead>
+                    <TableHead>Provider</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Last heartbeat</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Incident history and runbooks</CardTitle>
-          <CardDescription>
-            Embed the recent incidents with quick links to runbooks so responders have context inside the admin
-            surface.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Accordion type="single" collapsible className="space-y-2">
-            {INCIDENT_HISTORY.map((incident) => (
-              <AccordionItem key={incident.id} value={incident.id}>
-                <AccordionTrigger>
-                  <div className="flex flex-col text-left">
-                    <span className="font-semibold text-foreground">{incident.title}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {incident.startedAt} · {incident.status}
-                    </span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-3 text-sm text-muted-foreground">
-                    <div>
-                      <span className="font-medium text-foreground">Impact:</span> {incident.impact}
-                    </div>
-                    <div>
-                      <span className="font-medium text-foreground">Timeline:</span> {incident.duration}
-                    </div>
-                    <div>
-                      <span className="font-medium text-foreground">Summary:</span> {incident.summary}
-                    </div>
-                    <div>
-                      <span className="font-medium text-foreground">Runbook:</span> {incident.runbook}
-                    </div>
-                    <div>
-                      <span className="font-medium text-foreground">Follow ups:</span>
-                      <ul className="list-disc pl-4">
-                        {incident.followUp.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {forwarders.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground">
+                        No log forwarders configured.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    forwarders.map((forwarder) => (
+                      <TableRow key={forwarder.id}>
+                        <TableCell>
+                          <div className="font-medium">{forwarder.destination}</div>
+                          <div className="text-xs text-muted-foreground">{forwarder.notes ?? ""}</div>
+                        </TableCell>
+                        <TableCell>{forwarder.provider ?? "—"}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={forwarderTone[forwarder.status]}>
+                            {forwarder.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{formatDateTime(forwarder.lastHeartbeatAt)}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
 
+type SummaryCardProps = {
+  icon: ReactNode;
+  label: string;
+  value: string | number;
+  subtext: string;
+};
+
+function SummaryCard({ icon, label, value, subtext }: SummaryCardProps) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{label}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-semibold">{value}</div>
+        <p className="text-xs text-muted-foreground">{subtext}</p>
+      </CardContent>
+    </Card>
+  );
+}

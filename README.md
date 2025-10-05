@@ -185,3 +185,86 @@
 ## 12) Roadmap Pointers
 - V2: multi‑print‑tech in one job, auto‑repricer, advanced fraud/risk, multi‑currency payouts, SLA simulations.
 
+## 13) Creating New Models
+To create a new model from the CLI:
+
+bash
+ggt add model <modelName>
+For example:
+
+bash
+ggt add model conversation
+ggt add model message
+ggt add model chatSession
+Managing Model Schema
+When you work locally with ggt, Gadget converts the visual model editor into metadata files that you can edit directly. These files are typically located in:
+
+.gadget/sync/
+├── models/
+│   ├── user/
+│   │   └── schema.gadget.ts
+│   ├── catalogValidation/
+│   │   └── schema.gadget.ts
+│   └── yourNewModel/
+│       └── schema.gadget.ts
+Adding Fields to Models
+You can edit the schema.gadget.ts files directly to add fields. For example:
+
+TypeScript
+// .gadget/sync/models/conversation/schema.gadget.ts
+import type { GadgetModel } from "gadget-server";
+
+export const schema: GadgetModel = {
+  type: "gadget/model-schema/v1",
+  storageKey: "conversation",
+  fields: {
+    title: { type: "string", validations: { required: true } },
+    status: { 
+      type: "enum", 
+      options: ["open", "assigned", "resolved", "closed"],
+      validations: { required: true },
+      default: "open"
+    },
+    priority: { 
+      type: "enum", 
+      options: ["low", "medium", "high", "urgent"],
+      default: "medium"
+    },
+    assignedAgent: { 
+      type: "belongsTo", 
+      parent: { model: "user" }
+    },
+    customerEmail: { 
+      type: "email", 
+      validations: { required: true }
+    },
+    lastResponseAt: { type: "dateTime" },
+    resolvedAt: { type: "dateTime" }
+  }
+};
+Adding Actions
+Create new actions using:
+
+bash
+ggt add action <modelName> <actionName>
+# or for global actions:
+ggt add action <actionName>
+For example:
+
+bash
+ggt add action conversation assignToAgent
+ggt add action conversation updateStatus
+ggt add action message markAsRead
+Other Useful CLI Commands
+List all models: ggt list models
+Add relationships: Edit the schema files to add belongsTo, hasMany, etc.
+Deploy changes: ggt deploy (pushes local changes to your environment)
+Pull latest changes: ggt pull (gets latest from your cloud environment)
+Working with Existing Models
+To edit existing models like your catalogValidation, you would:
+
+Pull the project locally with ggt dev
+Edit .gadget/sync/models/catalogValidation/schema.gadget.ts
+The changes will automatically sync to your development environment
+The CLI gives you full control over your data models while keeping everything in sync with Gadget's cloud environment. This is especially powerful for complex applications like the chat dashboard we're planning to build!
+

@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, type ReactNode } from "react";
+import type { Route } from "./+types/_app.admin.rbac._index";
 import { PageHeader } from "@/components/app/page-header";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
@@ -61,7 +62,7 @@ const filterContentByPath: Record<string, string> = Object.fromEntries(
   Object.entries(filterModules).map(([path, content]) => [normalizeFilterKey(path), content])
 );
 
-const defaultFeatureFlags: FeatureFlag[] = [
+const DEFAULT_FEATURE_FLAGS: FeatureFlag[] = [
   {
     key: "admin.observability",
     label: "Observability suite",
@@ -92,9 +93,96 @@ const defaultFeatureFlags: FeatureFlag[] = [
   },
 ];
 
-export default function AdminRbacPage() {
+const serializeError = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return "Unknown error";
+  }
+};
+
+export const loader = async ({ context }: Route.LoaderArgs) => {
+  const manager = (context.api as Record<string, unknown> | undefined)?.featureFlag as
+    | { findMany?: (options: unknown) => Promise<unknown> }
+    | undefined;
+
+  if (!manager?.findMany) {
+    return {
+      featureFlags: DEFAULT_FEATURE_FLAGS,
+      source: "fallback" as const,
+      error: "FeatureFlag model not available in API client.",
+    };
+  }
+
+  try {
+    const raw = (await manager.findMany({
+      select: {
+        key: true,
+        label: true,
+        description: { truncatedHTML: true, plainText: true },
+        category: true,
+        enabledRoles: true,
+        status: true,
+      },
+      sort: { key: "Ascending" },
+      first: 100,
+    })) as unknown[];
+
+    const featureFlags: FeatureFlag[] = raw
+      .map((record) => {
+        const entry = record as Record<string, unknown>;
+        const key = typeof entry.key === "string" && entry.key.length > 0 ? entry.key : undefined;
+        if (!key) {
+          return undefined;
+        }
+
+        const description =
+          typeof entry.description?.plainText === "string" && entry.description.plainText.trim().length > 0
+            ? entry.description.plainText
+            : typeof entry.description === "string"
+              ? entry.description
+              : undefined;
+
+        const enabledRoles = Array.isArray(entry.enabledRoles)
+          ? (entry.enabledRoles as unknown[]).map((role) => String(role)).filter(Boolean)
+          : [];
+
+        return {
+          key,
+          label: typeof entry.label === "string" && entry.label.length > 0 ? entry.label : key,
+          description: description ?? `Feature flag ${key}`,
+          enabledRoles,
+          category: typeof entry.category === "string" && entry.category.length > 0 ? entry.category : undefined,
+        } satisfies FeatureFlag;
+      })
+      .filter((flag): flag is FeatureFlag => Boolean(flag));
+
+    return { featureFlags, source: "api" as const };
+  } catch (error) {
+    return {
+      featureFlags: DEFAULT_FEATURE_FLAGS,
+      source: "fallback" as const,
+      error: serializeError(error),
+    };
+  }
+};
+
+export default function AdminRbacPage({ loaderData }: Route.ComponentProps) {
+  const { featureFlags: initialFeatureFlags = DEFAULT_FEATURE_FLAGS, source = "fallback", error } =
+    (loaderData ?? {}) as {
+      featureFlags?: FeatureFlag[];
+      source?: "api" | "fallback";
+      error?: string;
+    };
+
   const roles = useMemo(() => computeNormalizedRoles(permissions, filterContentByPath), []);
-  const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>(() => defaultFeatureFlags.map((flag) => ({ ...flag })));
+  const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>(() => initialFeatureFlags.map((flag) => ({ ...flag })));
   const [activeRoleKey, setActiveRoleKey] = useState(() => roles[0]?.key ?? "");
 
   const handleToggleFeatureFlag = useCallback(
@@ -138,6 +226,11 @@ export default function AdminRbacPage() {
           title="Roles & Permissions"
           description="Define RBAC scopes, manage feature flags per role, and sync with access control policies."
         />
+        {source === "fallback" ? (
+          <p className="text-sm text-muted-foreground">
+            Feature flags loaded from sample data{error ? ` – ${error}` : "."}
+          </p>
+        ) : null}
 
         {roles.length === 0 ? (
           <Card>

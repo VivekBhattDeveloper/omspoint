@@ -401,8 +401,12 @@ export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderResul
       first: 50,
     })) as IntegrationApiRecord[];
 
-    if (!Array.isArray(raw) || raw.length === 0) {
-      return fallback("No integrations returned by API.");
+    if (!Array.isArray(raw)) {
+      return fallback("Integration query did not return an array response.");
+    }
+
+    if (raw.length === 0) {
+      return { integrations: [], source: "api" };
     }
 
     const integrations = raw.map((record, index) => normalizeIntegration(record, index));
@@ -1174,4 +1178,3 @@ const toStringArray = (value: unknown): string[] => {
 };
 
 const dedupeStrings = (values: string[]) => Array.from(new Set(values));
-

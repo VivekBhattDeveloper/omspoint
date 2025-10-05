@@ -77,9 +77,18 @@ export default function VendorsIndex() {
             search={search}
             onClick={handleRowClick}
             columns={[
-              "name",
-              "email", 
-              "phoneNumber",
+              {
+                header: "Name",
+                field: "name"
+              },
+              {
+                header: "Email",
+                field: "email"
+              },
+              {
+                header: "Phone Number",
+                field: "phoneNumber"
+              },
               {
                 header: "Location",
                 render: ({ record }) => (

@@ -138,7 +138,7 @@ export default function VendorSellersPage({ loaderData }: Route.ComponentProps) 
         <CardContent className="p-6">
           <AutoTable
             model={api.seller}
-            filter={{ vendor: { equals: vendor.id } }}
+            filter={{ vendorId: { equals: vendor.id } }}
             columns={[
               "name",
               "email",

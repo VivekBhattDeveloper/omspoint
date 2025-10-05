@@ -1,695 +1,626 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
+import type { Route } from "./+types/_app.admin.finance.config._index";
 import { PageHeader } from "@/components/app/page-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge, type BadgeProps } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, Building2, Clock, FileText, Globe2, Landmark, ShieldCheck } from "lucide-react";
+import { ArrowRight, Globe2, Landmark, ShieldCheck } from "lucide-react";
 
-type PartnerFinanceControl = {
-  partner: string;
-  partnerCode: string;
-  jurisdictions: string[];
-  feeModel: string;
-  payoutCycle: string;
-  ledgerAccount: string;
-  taxProfile: string;
-  status: "Active" | "Pilot" | "Paused";
+type NormalizedFeeRule = {
+  id: string;
+  type: string;
+  basis?: string;
+  rate?: number;
+  fixedAmount?: number;
+  min?: number;
+  max?: number;
+  currency?: string;
 };
 
-type FeeSchedule = {
-  name: string;
-  basis: string;
-  variable: string;
-  fixed: string;
-  effective: string;
-  appliesTo: string;
-};
-
-type TaxProfile = {
+type NormalizedTaxRule = {
+  id: string;
   jurisdiction: string;
-  taxType: string;
-  rate: string;
-  withholding: string;
-  lastUpdated: string;
-  owner: string;
+  taxType?: string;
+  rate?: number;
+  withholding?: string;
+  owner?: string;
+  updatedAt?: string;
 };
 
-type PayoutPolicy = {
-  partner: string;
-  region: string;
+type NormalizedPayoutSchedule = {
+  id: string;
   frequency: string;
-  settlementBuffer: string;
-  nextCutoff: string;
-  method: string;
-  status: "Active" | "Pilot";
+  offsetDays?: number;
+  cutoffTime?: string;
+  timeZone?: string;
+  method?: string;
+  status?: string;
 };
 
-type LedgerMapping = {
-  channel: string;
-  clearingAccount: string;
-  revenueAccount: string;
-  feesAccount: string;
-  reconciliation: string;
-  status: "Active" | "Pilot" | "Needs review";
+type FinanceConfigRecord = {
+  id: string;
+  name: string;
+  status: "draft" | "active" | "retired";
+  description?: string;
+  effectiveAt?: string;
+  appliesTo: string[];
+  feeRules: NormalizedFeeRule[];
+  taxRules: NormalizedTaxRule[];
+  payoutSchedules: NormalizedPayoutSchedule[];
 };
 
-type AuditEvent = {
-  timestamp: string;
-  actor: string;
-  change: string;
-  status: "Published" | "Awaiting approval" | "Draft";
-  ticket: string;
+type LoaderData = {
+  configs: FinanceConfigRecord[];
+  source: "api" | "fallback";
+  error?: string;
 };
 
-type BacklogItem = {
-  title: string;
-  status: "In progress" | "Blocked" | "Design" | "Open";
-  description: string;
-};
-
-const partnerControls: PartnerFinanceControl[] = [
+const FALLBACK_CONFIGS: FinanceConfigRecord[] = [
   {
-    partner: "Northwind Marketplaces",
-    partnerCode: "nw-market",
-    jurisdictions: ["US-CA", "US-NY"],
-    feeModel: "Marketplace core · 4.0% + $0.30",
-    payoutCycle: "Weekly · Wed 14:00 UTC",
-    ledgerAccount: "4000-OMS-NW",
-    taxProfile: "Marketplace facilitator",
-    status: "Active",
-  },
-  {
-    partner: "Contoso Retail",
-    partnerCode: "contoso-rtl",
-    jurisdictions: ["US-TX"],
-    feeModel: "Retail wholesale · 2.2% + $0.15",
-    payoutCycle: "Bi-weekly · Fri 21:00 UTC",
-    ledgerAccount: "4010-OMS-CT",
-    taxProfile: "Seller of record",
-    status: "Active",
-  },
-  {
-    partner: "FlexiFab Printing",
-    partnerCode: "flexifab-print",
-    jurisdictions: ["US-CA", "CA-ON"],
-    feeModel: "Print network · 1.4% net receipts",
-    payoutCycle: "Weekly · Thu 17:00 UTC",
-    ledgerAccount: "4050-OMS-FF",
-    taxProfile: "Supplier remits GST/HST",
-    status: "Pilot",
-  },
-  {
-    partner: "Globex EU",
-    partnerCode: "globex-eu",
-    jurisdictions: ["EU-DE", "EU-FR"],
-    feeModel: "EU dropship · 3.5% + €0.25",
-    payoutCycle: "Monthly · 1st @ 09:00 CET",
-    ledgerAccount: "4020-OMS-GX",
-    taxProfile: "IOSS remitter",
-    status: "Pilot",
-  },
-];
-
-const feeSchedules: FeeSchedule[] = [
-  {
+    id: "cfg-marketplace",
     name: "Marketplace core",
-    basis: "Gross GMV",
-    variable: "4.0%",
-    fixed: "$0.30 / order",
-    effective: "Jan 15, 2025",
-    appliesTo: "Northwind Marketplaces, Contoso Retail",
+    status: "active",
+    description: "Primary marketplace economics for Northwind and Contoso partners.",
+    effectiveAt: "2025-01-15T14:00:00Z",
+    appliesTo: ["Northwind Marketplaces", "Contoso Retail"],
+    feeRules: [
+      { id: "fee-marketplace-commission", type: "commission", basis: "percentage", rate: 0.04, fixedAmount: 0.3, currency: "USD" },
+    ],
+    taxRules: [
+      { id: "tax-us-ca", jurisdiction: "US-CA", taxType: "Marketplace facilitator", rate: 0.085, withholding: "County overrides auto-applied", owner: "Tax Ops", updatedAt: "2025-01-28T00:00:00Z" },
+      { id: "tax-us-ny", jurisdiction: "US-NY", taxType: "Marketplace facilitator", rate: 0.08875, owner: "Tax Ops", updatedAt: "2025-01-28T00:00:00Z" },
+    ],
+    payoutSchedules: [
+      { id: "pay-marketplace-weekly", frequency: "weekly", offsetDays: 2, cutoffTime: "14:00", timeZone: "UTC", method: "ACH · ledger 2100-PAY", status: "active" },
+    ],
   },
   {
+    id: "cfg-print-network",
     name: "Print network wholesale",
-    basis: "Net receipts",
-    variable: "2.2%",
-    fixed: "$0.15 / order",
-    effective: "Feb 01, 2025",
-    appliesTo: "FlexiFab Printing",
+    status: "active",
+    description: "Wholesale print economics for FlexiFab network.",
+    effectiveAt: "2025-02-01T09:00:00Z",
+    appliesTo: ["FlexiFab Printing"],
+    feeRules: [
+      { id: "fee-print-network", type: "service", basis: "percentage", rate: 0.022, fixedAmount: 0.15, currency: "USD" },
+    ],
+    taxRules: [
+      { id: "tax-ca-on", jurisdiction: "CA-ON", taxType: "GST/HST registrant", rate: 0.13, withholding: "1.5% vendor holdback", owner: "Finance Canada", updatedAt: "2025-02-10T00:00:00Z" },
+    ],
+    payoutSchedules: [
+      { id: "pay-print-weekly", frequency: "weekly", offsetDays: 3, cutoffTime: "17:00", timeZone: "UTC", method: "ACH · ledger 2100-PAY", status: "active" },
+    ],
   },
   {
+    id: "cfg-eu-pilot",
     name: "EU dropship pilot",
-    basis: "Gross GMV",
-    variable: "3.5%",
-    fixed: "€0.25 / order",
-    effective: "Mar 01, 2025",
-    appliesTo: "Globex EU",
+    status: "draft",
+    description: "Pilot finance configuration for Globex EU marketplace expansion.",
+    effectiveAt: "2025-03-01T09:00:00Z",
+    appliesTo: ["Globex EU"],
+    feeRules: [
+      { id: "fee-eu-dropship", type: "commission", basis: "percentage", rate: 0.035, fixedAmount: 0.25, currency: "EUR" },
+    ],
+    taxRules: [
+      { id: "tax-eu-de", jurisdiction: "EU-DE", taxType: "IOSS + OSS", rate: 0.19, withholding: "0.5% compliance buffer", owner: "EU Finance", updatedAt: "2025-02-14T00:00:00Z" },
+    ],
+    payoutSchedules: [
+      { id: "pay-eu-monthly", frequency: "monthly", offsetDays: 4, cutoffTime: "09:00", timeZone: "CET", method: "SEPA", status: "pilot" },
+    ],
   },
 ];
 
-const taxProfiles: TaxProfile[] = [
-  {
-    jurisdiction: "US-CA",
-    taxType: "Marketplace facilitator",
-    rate: "8.50% remitted",
-    withholding: "County overrides auto-applied",
-    lastUpdated: "Jan 28, 2025",
-    owner: "Tax Ops",
-  },
-  {
-    jurisdiction: "US-NY",
-    taxType: "Marketplace facilitator",
-    rate: "8.875% remitted",
-    withholding: "N/A",
-    lastUpdated: "Jan 28, 2025",
-    owner: "Tax Ops",
-  },
-  {
-    jurisdiction: "CA-ON",
-    taxType: "GST/HST registrant",
-    rate: "13% HST",
-    withholding: "1.5% vendor holdback",
-    lastUpdated: "Feb 10, 2025",
-    owner: "Finance Canada",
-  },
-  {
-    jurisdiction: "EU-DE",
-    taxType: "IOSS + OSS",
-    rate: "19% VAT",
-    withholding: "0.5% compliance buffer",
-    lastUpdated: "Feb 14, 2025",
-    owner: "EU Finance",
-  },
-];
-
-const payoutPolicies: PayoutPolicy[] = [
-  {
-    partner: "Northwind Marketplaces",
-    region: "US",
-    frequency: "Weekly",
-    settlementBuffer: "2 business days",
-    nextCutoff: "Feb 21, 2025 · 18:00 UTC",
-    method: "ACH · ledger 2100-PAY",
-    status: "Active",
-  },
-  {
-    partner: "Contoso Retail",
-    region: "US",
-    frequency: "Bi-weekly",
-    settlementBuffer: "3 business days",
-    nextCutoff: "Feb 28, 2025 · 21:00 UTC",
-    method: "ACH · ledger 2100-PAY",
-    status: "Active",
-  },
-  {
-    partner: "Globex EU",
-    region: "EU",
-    frequency: "Monthly",
-    settlementBuffer: "5 business days",
-    nextCutoff: "Mar 01, 2025 · 09:00 CET",
-    method: "SEPA · ledger 2150-EU",
-    status: "Pilot",
-  },
-];
-
-const ledgerMappings: LedgerMapping[] = [
-  {
-    channel: "Northwind Marketplaces",
-    clearingAccount: "2100-AR-MKT",
-    revenueAccount: "4000-MKT",
-    feesAccount: "5100-FEE-MKT",
-    reconciliation: "Auto via payout-service",
-    status: "Active",
-  },
-  {
-    channel: "Contoso Retail",
-    clearingAccount: "2105-AR-RTL",
-    revenueAccount: "4010-RTL",
-    feesAccount: "5110-FEE-RTL",
-    reconciliation: "Manual review pending",
-    status: "Needs review",
-  },
-  {
-    channel: "Globex EU",
-    clearingAccount: "2110-AR-EU",
-    revenueAccount: "4020-EU",
-    feesAccount: "5120-FEE-EU",
-    reconciliation: "Pending go-live",
-    status: "Pilot",
-  },
-];
-
-const auditTrail: AuditEvent[] = [
-  {
-    timestamp: "Feb 16, 2025 · 13:45 UTC",
-    actor: "A. Patel",
-    change: "Updated Globex EU VAT buffer to 0.5%.",
-    status: "Published",
-    ticket: "FIN-2132",
-  },
-  {
-    timestamp: "Feb 14, 2025 · 21:10 UTC",
-    actor: "R. Chen",
-    change: "Proposed marketplace fee escalation from 3.6% → 4.0%.",
-    status: "Awaiting approval",
-    ticket: "FIN-2127",
-  },
-  {
-    timestamp: "Feb 12, 2025 · 17:40 UTC",
-    actor: "K. Morales",
-    change: "Linked Northwind schedule to payout-service cluster us-east-2.",
-    status: "Published",
-    ticket: "FIN-2121",
-  },
-  {
-    timestamp: "Feb 08, 2025 · 09:15 UTC",
-    actor: "M. Gomez",
-    change: "Drafted Ontario HST onboarding playbook.",
-    status: "Draft",
-    ticket: "FIN-2114",
-  },
-];
-
-const backlogItems: BacklogItem[] = [
-  {
-    title: "Ledger & payout orchestration",
-    status: "In progress",
-    description: "Wire config publishing into ledger-service + payout-service to keep entries and schedules synchronized.",
-  },
-  {
-    title: "Jurisdictional fee schedules",
-    status: "Blocked",
-    description: "Model layered fees and tax overrides per jurisdiction with sunset/activation windows.",
-  },
-  {
-    title: "Settlement impact previews",
-    status: "Design",
-    description: "Simulate gross-to-net deltas before publishing changes, including partner-level what-ifs.",
-  },
-  {
-    title: "Audit trail export",
-    status: "Open",
-    description: "Expose approval trail, diff history, and exportable evidence packages for finance governance.",
-  },
-];
-
-const settlementPreview = {
-  scenario: "Increase marketplace core fee to 4.0%",
-  effectiveDate: "Mar 01, 2025",
-  grossVolume: 540_000,
-  currentFees: 19_440,
-  proposedFees: 21_600,
-  impactedPartners: ["Northwind Marketplaces", "Contoso Retail"],
-  payoutBatches: ["US-W1 · Mar 03", "US-E2 · Mar 05", "US-W1 · Mar 10"],
-  approvals: ["Finance Ops", "Tax Ops"],
-};
-
-const badgeVariantFor = (status: string): BadgeProps["variant"] => {
-  switch (status) {
-    case "Active":
-    case "Published":
-    case "In progress":
-      return "secondary";
-    case "Awaiting approval":
-    case "Design":
-      return "default";
-    case "Pilot":
-    case "Open":
-      return "outline";
-    case "Draft":
-    case "Needs review":
-    case "Blocked":
-      return "destructive";
-    default:
-      return "outline";
+const serializeError = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return "Unknown error";
   }
 };
 
-export default function AdminFinanceConfigPage() {
-  const currency = useMemo(() => new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }), []);
-  const activePartners = partnerControls.filter((control) => control.status === "Active").length;
-  const jurisdictionCount = new Set(partnerControls.flatMap((control) => control.jurisdictions)).size;
-  const approvalQueue = auditTrail.filter((event) => event.status === "Awaiting approval").length;
-  const activePolicies = payoutPolicies.filter((policy) => policy.status === "Active");
-  const nextCutoff = activePolicies.length ? activePolicies[0].nextCutoff : "No active payouts scheduled";
-  const feeDelta = settlementPreview.proposedFees - settlementPreview.currentFees;
+const guardArray = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
+
+const guardNumber = (value: unknown): number | undefined => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+};
+
+const parseAppliesTo = (value: unknown): string[] => {
+  if (!value) {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => String(entry)).filter(Boolean);
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.map((entry: unknown) => String(entry)).filter(Boolean);
+      }
+    } catch {
+      // fall through to treat as comma separated string
+    }
+    return value
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
+export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderData> => {
+  const manager = (context.api as Record<string, unknown> | undefined)?.financeConfig as
+    | { findMany?: (options: unknown) => Promise<unknown> }
+    | undefined;
+
+  if (!manager?.findMany) {
+    return { configs: FALLBACK_CONFIGS, source: "fallback", error: "FinanceConfig model not available in API client." };
+  }
+
+  try {
+    const raw = (await manager.findMany({
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        description: { truncatedHTML: true, plainText: true },
+        effectiveAt: true,
+        appliesTo: true,
+        feeRules: {
+          select: {
+            id: true,
+            type: true,
+            basis: true,
+            rate: true,
+            fixedAmount: true,
+            min: true,
+            max: true,
+            currency: true,
+          },
+          sort: { type: "Ascending" },
+          first: 25,
+        },
+        taxRules: {
+          select: {
+            id: true,
+            jurisdiction: true,
+            taxType: true,
+            rate: true,
+            withholding: true,
+            owner: true,
+            updatedAt: true,
+          },
+          sort: { jurisdiction: "Ascending" },
+          first: 25,
+        },
+        payoutSchedules: {
+          select: {
+            id: true,
+            frequency: true,
+            offsetDays: true,
+            cutoffTime: true,
+            timeZone: true,
+            method: true,
+            status: true,
+          },
+          sort: { frequency: "Ascending" },
+          first: 10,
+        },
+      },
+      sort: { name: "Ascending" },
+      first: 20,
+    })) as unknown[];
+
+    const configs: FinanceConfigRecord[] = raw.map((record, index) => {
+      const entry = record as Record<string, unknown>;
+      const id = typeof entry.id === "string" && entry.id.length > 0 ? entry.id : `finance-config-${index}`;
+      const name = typeof entry.name === "string" && entry.name.length > 0 ? entry.name : `Finance config ${index + 1}`;
+      const status = (typeof entry.status === "string" && ["draft", "active", "retired"].includes(entry.status))
+        ? (entry.status as FinanceConfigRecord["status"])
+        : "draft";
+
+      const description =
+        typeof entry.description?.plainText === "string" && entry.description.plainText.trim().length > 0
+          ? (entry.description.plainText as string)
+          : undefined;
+
+      const feeRules = guardArray(entry.feeRules).map((fee: unknown, feeIndex: number) => {
+        const feeEntry = fee as Record<string, unknown>;
+        return {
+          id: typeof feeEntry.id === "string" && feeEntry.id.length > 0 ? (feeEntry.id as string) : `${id}-fee-${feeIndex}`,
+          type: typeof feeEntry.type === "string" ? feeEntry.type : "service",
+          basis: typeof feeEntry.basis === "string" ? feeEntry.basis : undefined,
+          rate: guardNumber(feeEntry.rate),
+          fixedAmount: guardNumber(feeEntry.fixedAmount),
+          min: guardNumber(feeEntry.min),
+          max: guardNumber(feeEntry.max),
+          currency: typeof feeEntry.currency === "string" ? feeEntry.currency : undefined,
+        } satisfies NormalizedFeeRule;
+      });
+
+      const taxRules = guardArray(entry.taxRules).map((tax: unknown, taxIndex: number) => {
+        const taxEntry = tax as Record<string, unknown>;
+        return {
+          id: typeof taxEntry.id === "string" && taxEntry.id.length > 0 ? (taxEntry.id as string) : `${id}-tax-${taxIndex}`,
+          jurisdiction: typeof taxEntry.jurisdiction === "string" ? taxEntry.jurisdiction : "Unassigned",
+          taxType: typeof taxEntry.taxType === "string" ? taxEntry.taxType : undefined,
+          rate: guardNumber(taxEntry.rate),
+          withholding: typeof taxEntry.withholding === "string" ? taxEntry.withholding : undefined,
+          owner: typeof taxEntry.owner === "string" ? taxEntry.owner : undefined,
+          updatedAt: typeof taxEntry.updatedAt === "string" ? taxEntry.updatedAt : undefined,
+        } satisfies NormalizedTaxRule;
+      });
+
+      const payoutSchedules = guardArray(entry.payoutSchedules).map((schedule: unknown, scheduleIndex: number) => {
+        const scheduleEntry = schedule as Record<string, unknown>;
+        return {
+          id:
+            typeof scheduleEntry.id === "string" && scheduleEntry.id.length > 0
+              ? (scheduleEntry.id as string)
+              : `${id}-payout-${scheduleIndex}`,
+          frequency: typeof scheduleEntry.frequency === "string" ? scheduleEntry.frequency : "weekly",
+          offsetDays: guardNumber(scheduleEntry.offsetDays),
+          cutoffTime: typeof scheduleEntry.cutoffTime === "string" ? scheduleEntry.cutoffTime : undefined,
+          timeZone: typeof scheduleEntry.timeZone === "string" ? scheduleEntry.timeZone : undefined,
+          method: typeof scheduleEntry.method === "string" ? scheduleEntry.method : undefined,
+          status: typeof scheduleEntry.status === "string" ? scheduleEntry.status : undefined,
+        } satisfies NormalizedPayoutSchedule;
+      });
+
+      return {
+        id,
+        name,
+        status,
+        description,
+        effectiveAt: typeof entry.effectiveAt === "string" ? entry.effectiveAt : undefined,
+        appliesTo: parseAppliesTo(entry.appliesTo),
+        feeRules,
+        taxRules,
+        payoutSchedules,
+      } satisfies FinanceConfigRecord;
+    });
+
+    return { configs, source: "api" } satisfies LoaderData;
+  } catch (error) {
+    return {
+      configs: FALLBACK_CONFIGS,
+      source: "fallback",
+      error: serializeError(error),
+    } satisfies LoaderData;
+  }
+};
+
+const formatPercent = (value?: number) => {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return "—";
+  }
+  return `${(value * 100).toFixed(2).replace(/\.00$/, "")} %`;
+};
+
+const formatCurrency = (value?: number, currency = "USD") => {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return "—";
+  }
+  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(value);
+};
+
+const formatDateTime = (value?: string) => {
+  if (!value) {
+    return "—";
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "—";
+  }
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "UTC",
+  }).format(parsed);
+};
+
+const summarizeBuffer = (schedule: NormalizedPayoutSchedule) => {
+  const parts: string[] = [];
+  if (typeof schedule.offsetDays === "number") {
+    parts.push(`${schedule.offsetDays} day${schedule.offsetDays === 1 ? "" : "s"}`);
+  }
+  if (schedule.cutoffTime) {
+    parts.push(`Cutoff ${schedule.cutoffTime}${schedule.timeZone ? ` ${schedule.timeZone}` : ""}`);
+  }
+  return parts.length > 0 ? parts.join(" · ") : "—";
+};
+
+export default function FinanceConfigPage({ loaderData }: Route.ComponentProps) {
+  const { configs, source, error } = loaderData;
+
+  const metrics = useMemo(() => {
+    const active = configs.filter((config) => config.status === "active");
+    const partners = new Set<string>();
+    configs.forEach((config) => config.appliesTo.forEach((partner) => partners.add(partner)));
+
+    const nextEffective = configs
+      .map((config) => config.effectiveAt)
+      .filter((value): value is string => Boolean(value))
+      .map((value) => Date.parse(value))
+      .filter((timestamp) => !Number.isNaN(timestamp) && timestamp >= Date.now())
+      .sort((a, b) => a - b)[0];
+
+    const totalFeeRules = configs.reduce((total, config) => total + config.feeRules.length, 0);
+
+    return {
+      active: active.length,
+      partners: partners.size,
+      nextEffective: nextEffective ? formatDateTime(new Date(nextEffective).toISOString()) : "—",
+      totalFeeRules,
+    };
+  }, [configs]);
+
+  const firstConfigId = configs[0]?.id ?? "";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         title="Finance Configuration"
-        description="Govern fees, taxes, payout cycles, and ledger mappings across every commerce partner."
-        actions={
-          <Button>
-            Propose change
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        }
+        description="Govern platform fee structures, tax policies, and payout cadences."
       />
 
+      {error && source === "fallback" ? (
+        <Alert variant="destructive">
+          <AlertTitle>Using sample data</AlertTitle>
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Connected partners</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activePartners} / {partnerControls.length}</div>
-            <p className="text-xs text-muted-foreground">Finance controls live vs. total onboarded partners.</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Jurisdictions governed</CardTitle>
-            <Globe2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{jurisdictionCount}</div>
-            <p className="text-xs text-muted-foreground">Fee schedules and tax logic coverage across regions.</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Next payout cutoff</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-semibold">{nextCutoff}</div>
-            <p className="text-xs text-muted-foreground">Based on active payout policies managed by finance.</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Approvals in queue</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{approvalQueue}</div>
-            <p className="text-xs text-muted-foreground">Configuration changes awaiting dual control sign-off.</p>
-          </CardContent>
-        </Card>
+        <SummaryTile icon={<ShieldCheck className="h-5 w-5 text-emerald-600" />} label="Active configurations" value={metrics.active} subtext="Ready for settlement" />
+        <SummaryTile icon={<Globe2 className="h-5 w-5 text-blue-600" />} label="Partners covered" value={metrics.partners} subtext="Across all business units" />
+        <SummaryTile icon={<Landmark className="h-5 w-5 text-amber-600" />} label="Fee rules" value={metrics.totalFeeRules} subtext="Applied across configurations" />
+        <SummaryTile icon={<ArrowRight className="h-5 w-5 text-slate-600" />} label="Next effective" value={metrics.nextEffective} subtext="Upcoming go-live" />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Commerce partner governance</CardTitle>
-          <CardDescription>Track financial guardrails, payout cadence, and tax alignment per partner.</CardDescription>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Partner</TableHead>
-                <TableHead>Jurisdictions</TableHead>
-                <TableHead>Fee & tax profile</TableHead>
-                <TableHead>Payout cycle</TableHead>
-                <TableHead>Ledger mapping</TableHead>
-                <TableHead className="text-right">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {partnerControls.map((control) => (
-                <TableRow key={control.partnerCode}>
-                  <TableCell>
-                    <div className="font-medium">{control.partner}</div>
-                    <div className="text-xs text-muted-foreground">{control.partnerCode}</div>
-                  </TableCell>
-                  <TableCell className="align-top">{control.jurisdictions.join(", ")}</TableCell>
-                  <TableCell className="align-top space-y-1">
-                    <div>{control.feeModel}</div>
-                    <p className="text-xs text-muted-foreground">Tax: {control.taxProfile}</p>
-                  </TableCell>
-                  <TableCell className="align-top">{control.payoutCycle}</TableCell>
-                  <TableCell className="align-top">{control.ledgerAccount}</TableCell>
-                  <TableCell className="align-top text-right">
-                    <Badge variant={badgeVariantFor(control.status)}>{control.status}</Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Tabs defaultValue="fees" className="space-y-4">
-        <TabsList className="w-full justify-start gap-2 overflow-x-auto">
-          <TabsTrigger value="fees">Fee schedules</TabsTrigger>
-          <TabsTrigger value="taxes">Taxes & withholding</TabsTrigger>
-          <TabsTrigger value="payouts">Payout cycles</TabsTrigger>
-          <TabsTrigger value="ledger">Ledger mapping</TabsTrigger>
-        </TabsList>
-        <TabsContent value="fees" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Fee schedules</CardTitle>
-              <CardDescription>Define how revenue share, platform fees, and fixed charges apply per partner cohort.</CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Schedule</TableHead>
-                    <TableHead>Basis</TableHead>
-                    <TableHead>Variable</TableHead>
-                    <TableHead>Fixed</TableHead>
-                    <TableHead>Effective</TableHead>
-                    <TableHead>Applies to</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {feeSchedules.map((schedule) => (
-                    <TableRow key={schedule.name}>
-                      <TableCell className="font-medium">{schedule.name}</TableCell>
-                      <TableCell>{schedule.basis}</TableCell>
-                      <TableCell>{schedule.variable}</TableCell>
-                      <TableCell>{schedule.fixed}</TableCell>
-                      <TableCell>{schedule.effective}</TableCell>
-                      <TableCell>{schedule.appliesTo}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-          <Alert>
-            <ShieldCheck className="h-4 w-4" />
-            <AlertTitle>Governance checkpoint</AlertTitle>
-            <AlertDescription>
-              Publishing fee changes pushes a preview to payout-service and generates a journal proposal in ledger-service for dual approval.
-            </AlertDescription>
-          </Alert>
-        </TabsContent>
-
-        <TabsContent value="taxes">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tax & withholding rules</CardTitle>
-              <CardDescription>Jurisdiction-specific logic for remittance, marketplace obligations, and vendor holdbacks.</CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Jurisdiction</TableHead>
-                    <TableHead>Tax type</TableHead>
-                    <TableHead>Rate</TableHead>
-                    <TableHead>Withholding</TableHead>
-                    <TableHead>Last updated</TableHead>
-                    <TableHead>Owner</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {taxProfiles.map((profile) => (
-                    <TableRow key={profile.jurisdiction}>
-                      <TableCell className="font-medium">{profile.jurisdiction}</TableCell>
-                      <TableCell>{profile.taxType}</TableCell>
-                      <TableCell>{profile.rate}</TableCell>
-                      <TableCell>{profile.withholding}</TableCell>
-                      <TableCell>{profile.lastUpdated}</TableCell>
-                      <TableCell>{profile.owner}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="payouts">
-          <Card>
-            <CardHeader>
-              <CardTitle>Payout cycles</CardTitle>
-              <CardDescription>Control cadence, buffers, and routing for finance settlements per partner and region.</CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Partner</TableHead>
-                    <TableHead>Region</TableHead>
-                    <TableHead>Frequency</TableHead>
-                    <TableHead>Buffer</TableHead>
-                    <TableHead>Next cutoff</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead className="text-right">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {payoutPolicies.map((policy) => (
-                    <TableRow key={policy.partner}>
-                      <TableCell className="font-medium">{policy.partner}</TableCell>
-                      <TableCell>{policy.region}</TableCell>
-                      <TableCell>{policy.frequency}</TableCell>
-                      <TableCell>{policy.settlementBuffer}</TableCell>
-                      <TableCell>{policy.nextCutoff}</TableCell>
-                      <TableCell>{policy.method}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant={badgeVariantFor(policy.status)}>{policy.status}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="ledger">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ledger mappings</CardTitle>
-              <CardDescription>Ensure every payout and fee posts to the correct clearing and revenue accounts.</CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Channel</TableHead>
-                    <TableHead>Clearing</TableHead>
-                    <TableHead>Revenue</TableHead>
-                    <TableHead>Fees</TableHead>
-                    <TableHead>Reconciliation</TableHead>
-                    <TableHead className="text-right">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ledgerMappings.map((mapping) => (
-                    <TableRow key={mapping.channel}>
-                      <TableCell className="font-medium">{mapping.channel}</TableCell>
-                      <TableCell>{mapping.clearingAccount}</TableCell>
-                      <TableCell>{mapping.revenueAccount}</TableCell>
-                      <TableCell>{mapping.feesAccount}</TableCell>
-                      <TableCell>{mapping.reconciliation}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant={badgeVariantFor(mapping.status)}>{mapping.status}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <div className="grid gap-4 lg:grid-cols-2">
+      {configs.length === 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Settlement impact preview</CardTitle>
-            <CardDescription>
-              {settlementPreview.scenario} · Effective {settlementPreview.effectiveDate}.
-            </CardDescription>
+            <CardTitle>No finance configurations found</CardTitle>
+            <CardDescription>Publish at least one configuration to manage partner economics.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <p className="text-sm text-muted-foreground">Gross volume (lookback 30d)</p>
-                <p className="text-lg font-semibold">{currency.format(settlementPreview.grossVolume)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Current platform fees</p>
-                <p className="text-lg font-semibold">{currency.format(settlementPreview.currentFees)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Proposed platform fees</p>
-                <p className="text-lg font-semibold">{currency.format(settlementPreview.proposedFees)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Delta on next cycle</p>
-                <p className={`text-lg font-semibold ${feeDelta >= 0 ? "text-amber-600" : "text-emerald-600"}`}>
-                  {feeDelta >= 0 ? "+" : "-"}
-                  {currency.format(Math.abs(feeDelta))}
-                </p>
-              </div>
-            </div>
-            <Separator />
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Impacted partners</p>
-              <div className="flex flex-wrap gap-2">
-                {settlementPreview.impactedPartners.map((partner) => (
-                  <Badge key={partner} variant="outline">
-                    <Landmark className="mr-1.5 h-3.5 w-3.5" />
-                    {partner}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Payout batches</p>
-              <ul className="list-disc space-y-1 pl-4 text-sm text-muted-foreground">
-                {settlementPreview.payoutBatches.map((batch) => (
-                  <li key={batch}>{batch}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm text-muted-foreground">Approvals required:</p>
-              {settlementPreview.approvals.map((team) => (
-                <Badge key={team} variant="secondary">
-                  <ShieldCheck className="mr-1 h-3.5 w-3.5" />
-                  {team}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Audit trail</CardTitle>
-            <CardDescription>Dual-control history of adjustments, proposals, and published changes.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {auditTrail.map((event, index) => (
-              <div key={event.ticket} className="space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-medium">{event.change}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {event.actor} · {event.timestamp}
-                    </p>
-                  </div>
-                  <Badge variant={badgeVariantFor(event.status)}>{event.status}</Badge>
-                </div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Ticket {event.ticket}</p>
-                {index < auditTrail.length - 1 ? <Separator /> : null}
-              </div>
+      ) : (
+        <Tabs defaultValue={firstConfigId} className="space-y-6">
+          <TabsList>
+            {configs.map((config) => (
+              <TabsTrigger key={config.id} value={config.id}>
+                {config.name}
+              </TabsTrigger>
             ))}
-          </CardContent>
-        </Card>
-      </div>
+          </TabsList>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Finance backlog</CardTitle>
-          <CardDescription>Execution focus areas to harden the finance configuration surface.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          {backlogItems.map((item) => (
-            <div key={item.title} className="space-y-2 rounded-lg border p-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium">{item.title}</h3>
-                <Badge variant={badgeVariantFor(item.status)}>{item.status}</Badge>
-              </div>
-              <p className="text-sm text-muted-foreground">{item.description}</p>
-            </div>
+          {configs.map((config) => (
+            <TabsContent key={config.id} value={config.id} className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{config.name}</CardTitle>
+                  <CardDescription>
+                    {config.description ?? "Finance policy covering partners and associated rules."}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <MetadataItem label="Status" value={<StatusBadge status={config.status} />} />
+                  <MetadataItem label="Effective" value={formatDateTime(config.effectiveAt)} />
+                  <MetadataItem
+                    label="Partners"
+                    value={config.appliesTo.length > 0 ? config.appliesTo.join(", ") : "—"}
+                  />
+                  <MetadataItem
+                    label="Fee rules"
+                    value={`${config.feeRules.length} rule${config.feeRules.length === 1 ? "" : "s"}`}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Fee rules</CardTitle>
+                  <CardDescription>Commission, processing, and service fees applied to transactions.</CardDescription>
+                </CardHeader>
+                <CardContent className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Basis</TableHead>
+                        <TableHead>Rate</TableHead>
+                        <TableHead>Fixed</TableHead>
+                        <TableHead>Bounds</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {config.feeRules.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground">
+                            No fee rules configured.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        config.feeRules.map((rule) => (
+                          <TableRow key={rule.id}>
+                            <TableCell className="capitalize">{rule.type.replace(/_/g, " ")}</TableCell>
+                            <TableCell className="capitalize">{rule.basis ?? "—"}</TableCell>
+                            <TableCell>{formatPercent(rule.rate)}</TableCell>
+                            <TableCell>{formatCurrency(rule.fixedAmount, rule.currency)}</TableCell>
+                            <TableCell>
+                              {rule.min || rule.max
+                                ? `${rule.min ? formatCurrency(rule.min, rule.currency) : "—"} – ${rule.max ? formatCurrency(rule.max, rule.currency) : "—"}`
+                                : "—"}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tax profiles</CardTitle>
+                  <CardDescription>Jurisdictional rules governing indirect tax treatment.</CardDescription>
+                </CardHeader>
+                <CardContent className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Jurisdiction</TableHead>
+                        <TableHead>Tax type</TableHead>
+                        <TableHead>Rate</TableHead>
+                        <TableHead>Withholding</TableHead>
+                        <TableHead>Owner</TableHead>
+                        <TableHead>Updated</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {config.taxRules.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-muted-foreground">
+                            No tax rules defined.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        config.taxRules.map((rule) => (
+                          <TableRow key={rule.id}>
+                            <TableCell>{rule.jurisdiction}</TableCell>
+                            <TableCell>{rule.taxType ?? "—"}</TableCell>
+                            <TableCell>{formatPercent(rule.rate)}</TableCell>
+                            <TableCell>{rule.withholding ?? "—"}</TableCell>
+                            <TableCell>{rule.owner ?? "—"}</TableCell>
+                            <TableCell>{formatDateTime(rule.updatedAt)}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payout schedules</CardTitle>
+                  <CardDescription>Settlement cadence for partner disbursements.</CardDescription>
+                </CardHeader>
+                <CardContent className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Frequency</TableHead>
+                        <TableHead>Buffer</TableHead>
+                        <TableHead>Method</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {config.payoutSchedules.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground">
+                            No payout schedules configured.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        config.payoutSchedules.map((schedule) => (
+                          <TableRow key={schedule.id}>
+                            <TableCell className="capitalize">{schedule.frequency.replace(/_/g, " ")}</TableCell>
+                            <TableCell>{summarizeBuffer(schedule)}</TableCell>
+                            <TableCell>{schedule.method ?? "—"}</TableCell>
+                            <TableCell>
+                              {schedule.status ? (
+                                <Badge variant="outline" className="capitalize">
+                                  {schedule.status}
+                                </Badge>
+                              ) : (
+                                "—"
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
           ))}
-        </CardContent>
-      </Card>
+        </Tabs>
+      )}
+    </div>
+  );
+}
+
+type SummaryTileProps = {
+  icon: ReactNode;
+  label: string;
+  value: string | number;
+  subtext: string;
+};
+
+function SummaryTile({ icon, label, value, subtext }: SummaryTileProps) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{label}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-semibold">{value}</div>
+        <p className="text-xs text-muted-foreground">{subtext}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+type StatusBadgeProps = {
+  status: FinanceConfigRecord["status"];
+};
+
+function StatusBadge({ status }: StatusBadgeProps) {
+  const tone: Record<FinanceConfigRecord["status"], "secondary" | "outline" | "destructive"> = {
+    active: "secondary",
+    draft: "outline",
+    retired: "destructive",
+  };
+
+  return (
+    <Badge variant={tone[status]} className="capitalize">
+      {status}
+    </Badge>
+  );
+}
+
+type MetadataItemProps = {
+  label: string;
+  value: React.ReactNode;
+};
+
+function MetadataItem({ label, value }: MetadataItemProps) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="text-sm font-medium leading-tight">{typeof value === "string" ? value : value ?? "—"}</p>
     </div>
   );
 }

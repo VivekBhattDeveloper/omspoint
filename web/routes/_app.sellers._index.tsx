@@ -78,15 +78,15 @@ export default function SellersIndex() {
             columns={[
               {
                 header: "Name",
-                field: "name",
+                field: "name"
               },
               {
                 header: "Email",
-                field: "email",
+                field: "email"
               },
               {
                 header: "Phone",
-                field: "phoneNumber",
+                field: "phoneNumber"
               },
               {
                 header: "Location",
@@ -94,11 +94,11 @@ export default function SellersIndex() {
                   <span>
                     {record.city}, {record.state}
                   </span>
-                ),
+                )
               },
               {
                 header: "Vendor",
-                field: "vendor.name",
+                field: "vendor.name"
               },
               {
                 header: "Actions",
@@ -126,8 +126,8 @@ export default function SellersIndex() {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                ),
-              },
+                )
+              }
             ]}
             select={{
               id: true,

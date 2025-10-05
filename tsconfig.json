@@ -16,6 +16,9 @@
     "noEmit": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": [
+      "@shopify/app-bridge-types"
+    ]
   }
 }

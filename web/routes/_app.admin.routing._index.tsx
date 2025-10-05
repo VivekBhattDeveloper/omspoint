@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { Route } from "./+types/_app.admin.routing._index";
 import { PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,153 +91,30 @@ const numberFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-const DEFAULT_POLICIES: RoutingPolicy[] = [
-  {
-    id: "standard-us",
-    name: "Standard - US Direct Fulfillment",
-    status: "active",
-    channel: "Marketplace",
-    region: "US & Canada",
-    slaMinutes: 360,
-    maxLagMinutes: 120,
-    allowPartialFulfillment: true,
-    failoverStrategy: "cascading",
-    orchestrationStatus: "synced",
-    orchestrationLastSync: "2025-02-16T04:32:00Z",
-    vendorProfiles: [
-      {
-        id: "omni-print",
-        name: "OmniPrint Logistics",
-        region: "US-East",
-        specialization: ["Apparel", "Embellishment"],
-        weight: 40,
-        capacityPerHour: 420,
-        currentLoadPercent: 68,
-        slaMinutes: 300,
-        failoverPriority: 1,
-        health: "healthy",
-        autoPauseThreshold: 94,
-      },
-      {
-        id: "northland",
-        name: "Northland Fulfillment",
-        region: "US-Central",
-        specialization: ["Hardgoods", "On-demand"],
-        weight: 35,
-        capacityPerHour: 380,
-        currentLoadPercent: 74,
-        slaMinutes: 330,
-        failoverPriority: 2,
-        health: "warning",
-        autoPauseThreshold: 90,
-        lastIncidentAt: "2025-02-09T19:45:00Z",
-      },
-      {
-        id: "coastal",
-        name: "Coastal Print Co.",
-        region: "US-West",
-        specialization: ["Apparel", "Custom"],
-        weight: 25,
-        capacityPerHour: 260,
-        currentLoadPercent: 59,
-        slaMinutes: 420,
-        failoverPriority: 3,
-        health: "healthy",
-        autoPauseThreshold: 92,
-      },
-    ],
-    auditTrail: [
-      {
-        id: "audit-1",
-        summary: "Increased OmniPrint allocation from 35% to 40%",
-        actor: "Leah Gomez",
-        role: "Operations Manager",
-        status: "approved",
-        timestamp: "2025-02-18T15:12:00Z",
-      },
-      {
-        id: "audit-2",
-        summary: "Requested SLA reduction to 6h for expedited orders",
-        actor: "Caleb Bryant",
-        role: "Logistics Lead",
-        status: "pending",
-        timestamp: "2025-02-21T11:04:00Z",
-        notes: "Awaiting Finance review",
-      },
-    ],
-  },
-  {
-    id: "expedited-na",
-    name: "Expedited - North America",
-    status: "draft",
-    channel: "Direct Ship",
-    region: "US & Canada",
-    slaMinutes: 180,
-    maxLagMinutes: 45,
-    allowPartialFulfillment: false,
-    failoverStrategy: "parallel",
-    orchestrationStatus: "pending",
-    vendorProfiles: [
-      {
-        id: "velocity",
-        name: "Velocity Printworks",
-        region: "US-West",
-        specialization: ["Fast-turn Apparel", "Promo"],
-        weight: 45,
-        capacityPerHour: 310,
-        currentLoadPercent: 81,
-        slaMinutes: 150,
-        failoverPriority: 1,
-        health: "warning",
-        autoPauseThreshold: 88,
-      },
-      {
-        id: "metro",
-        name: "Metro Supply Labs",
-        region: "US-East",
-        specialization: ["On-demand", "Kitting"],
-        weight: 35,
-        capacityPerHour: 275,
-        currentLoadPercent: 64,
-        slaMinutes: 165,
-        failoverPriority: 2,
-        health: "healthy",
-        autoPauseThreshold: 90,
-      },
-      {
-        id: "polar",
-        name: "Polar Manufacturing",
-        region: "CA-East",
-        specialization: ["Cold-weather", "Outerwear"],
-        weight: 20,
-        capacityPerHour: 190,
-        currentLoadPercent: 52,
-        slaMinutes: 210,
-        failoverPriority: 3,
-        health: "healthy",
-        autoPauseThreshold: 94,
-      },
-    ],
-    auditTrail: [
-      {
-        id: "audit-3",
-        summary: "Created expedited pilot policy",
-        actor: "Rina Patel",
-        role: "Program Manager",
-        status: "approved",
-        timestamp: "2025-01-28T08:43:00Z",
-      },
-      {
-        id: "audit-4",
-        summary: "Awaiting approval for Velocity as primary vendor",
-        actor: "Elliot Chen",
-        role: "Supply Chain Director",
-        status: "pending",
-        timestamp: "2025-02-20T17:25:00Z",
-      },
-    ],
-  },
-];
+const parseSpecializations = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.map((entry) => (typeof entry === "string" ? entry : String(entry))).filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
+const isPolicyStatus = (value: unknown): value is PolicyStatus => value === "active" || value === "draft";
+const isFailoverStrategy = (value: unknown): value is FailoverStrategy =>
+  value === "cascading" || value === "parallel" || value === "round_robin";
+const isOrchestrationStatus = (value: unknown): value is OrchestrationStatus =>
+  value === "synced" || value === "pending" || value === "error";
+const isVendorHealth = (value: unknown): value is VendorHealth =>
+  value === "healthy" || value === "warning" || value === "critical";
+
+const isAuditStatus = (value: unknown): value is AuditStatus =>
+  value === "approved" || value === "pending" || value === "rejected";
+
 
 const DEFAULT_SCENARIO: SimulationScenario = {
   volume: 950,
@@ -314,9 +192,131 @@ function formatTimestamp(value?: string) {
   }
 }
 
-export default function AdminRoutingPage() {
-  const [policies, setPolicies] = useState<RoutingPolicy[]>(DEFAULT_POLICIES);
-  const [selectedPolicyId, setSelectedPolicyId] = useState<string>(DEFAULT_POLICIES[0]?.id ?? "");
+export const loader = async ({ context }: Route.LoaderArgs) => {
+  const policyManager = (context.api as { routingPolicy?: { findMany?: (args: unknown) => Promise<unknown> } }).routingPolicy;
+
+  if (!policyManager?.findMany) {
+    return { policies: [] as RoutingPolicy[] };
+  }
+
+  try {
+    const records = await policyManager.findMany({
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        channel: true,
+        region: true,
+        slaMinutes: true,
+        maxLagMinutes: true,
+        allowPartialFulfillment: true,
+        failoverStrategy: true,
+        orchestrationStatus: true,
+        orchestrationLastSync: true,
+        vendorProfiles: {
+          select: {
+            id: true,
+            region: true,
+            weight: true,
+            capacityPerHour: true,
+            currentLoadPercent: true,
+            slaMinutes: true,
+            failoverPriority: true,
+            health: true,
+            autoPauseThreshold: true,
+            lastIncidentAt: true,
+            specializations: true,
+            vendor: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        auditEntries: {
+          select: {
+            id: true,
+            summary: true,
+            actor: true,
+            role: true,
+            status: true,
+            timestamp: true,
+            notes: true,
+          },
+        },
+      },
+      sort: { name: "Ascending" },
+    });
+
+    const policies: RoutingPolicy[] = (Array.isArray(records) ? records : []).map((record, policyIndex) => {
+      const vendorProfiles = Array.isArray(record.vendorProfiles) ? record.vendorProfiles : [];
+      const auditEntries = Array.isArray(record.auditEntries) ? record.auditEntries : [];
+
+      const normalizedVendors: VendorProfile[] = vendorProfiles.map((profile: any, vendorIndex: number) => {
+        const vendorId = profile?.vendor?.id ?? profile?.id ?? `vendor-${policyIndex + 1}-${vendorIndex + 1}`;
+        const vendorName = profile?.vendor?.name ?? `Vendor ${vendorIndex + 1}`;
+        const region = typeof profile?.region === "string" && profile.region.trim().length
+          ? profile.region
+          : "Unassigned region";
+        const specialization = parseSpecializations(profile?.specializations);
+
+        return {
+          id: vendorId,
+          name: vendorName,
+          region,
+          specialization,
+          weight: typeof profile?.weight === "number" ? profile.weight : 0,
+          capacityPerHour: typeof profile?.capacityPerHour === "number" ? profile.capacityPerHour : 0,
+          currentLoadPercent: typeof profile?.currentLoadPercent === "number" ? profile.currentLoadPercent : 0,
+          slaMinutes: typeof profile?.slaMinutes === "number" ? profile.slaMinutes : 0,
+          failoverPriority: typeof profile?.failoverPriority === "number" ? profile.failoverPriority : vendorIndex + 1,
+          health: isVendorHealth(profile?.health) ? profile.health : "healthy",
+          autoPauseThreshold: typeof profile?.autoPauseThreshold === "number" ? profile.autoPauseThreshold : 0,
+          lastIncidentAt: typeof profile?.lastIncidentAt === "string" ? profile.lastIncidentAt : undefined,
+        } satisfies VendorProfile;
+      });
+
+      normalizedVendors.sort((a, b) => a.failoverPriority - b.failoverPriority);
+
+      const normalizedAuditTrail: AuditEntry[] = auditEntries
+        .map((entry: any, auditIndex: number) => ({
+          id: entry?.id ?? `audit-${policyIndex + 1}-${auditIndex + 1}`,
+          summary: entry?.summary ?? "Policy update",
+          actor: entry?.actor ?? "Unknown actor",
+          role: entry?.role ?? "Unknown role",
+          status: isAuditStatus(entry?.status) ? entry.status : "pending",
+          timestamp: typeof entry?.timestamp === "string" ? entry.timestamp : new Date().toISOString(),
+          notes: typeof entry?.notes === "string" ? entry.notes : undefined,
+        }))
+        .sort((a, b) => (Date.parse(b.timestamp) || 0) - (Date.parse(a.timestamp) || 0));
+
+      return {
+        id: record?.id ?? `policy-${policyIndex + 1}`,
+        name: record?.name ?? "Untitled policy",
+        status: isPolicyStatus(record?.status) ? record.status : "draft",
+        channel: record?.channel ?? "Unassigned channel",
+        region: record?.region ?? "Unknown region",
+        slaMinutes: typeof record?.slaMinutes === "number" ? record.slaMinutes : 0,
+        maxLagMinutes: typeof record?.maxLagMinutes === "number" ? record.maxLagMinutes : 0,
+        allowPartialFulfillment: typeof record?.allowPartialFulfillment === "boolean" ? record.allowPartialFulfillment : false,
+        failoverStrategy: isFailoverStrategy(record?.failoverStrategy) ? record.failoverStrategy : "cascading",
+        orchestrationStatus: isOrchestrationStatus(record?.orchestrationStatus) ? record.orchestrationStatus : "pending",
+        orchestrationLastSync: typeof record?.orchestrationLastSync === "string" ? record.orchestrationLastSync : undefined,
+        vendorProfiles: normalizedVendors,
+        auditTrail: normalizedAuditTrail,
+      } satisfies RoutingPolicy;
+    });
+
+    return { policies };
+  } catch (error) {
+    console.error("Failed to load routing policies", error);
+    return { policies: [] as RoutingPolicy[] };
+  }
+};
+
+export default function AdminRoutingPage({ loaderData }: Route.ComponentProps) {
+  const { policies: loaderPolicies = [] } = loaderData ?? { policies: [] };
+  const [policies, setPolicies] = useState<RoutingPolicy[]>(loaderPolicies);
+  const [selectedPolicyId, setSelectedPolicyId] = useState<string>(loaderPolicies[0]?.id ?? "");
   const [scenario, setScenario] = useState<SimulationScenario>(DEFAULT_SCENARIO);
   const [auditDraft, setAuditDraft] = useState<string>("");
   const [syncBanner, setSyncBanner] = useState<{ tone: "success" | "error"; message: string } | null>(null);
@@ -324,6 +324,16 @@ export default function AdminRoutingPage() {
   const selectedPolicy = useMemo(() => {
     return policies.find((policy) => policy.id === selectedPolicyId) ?? policies[0] ?? null;
   }, [policies, selectedPolicyId]);
+
+  useEffect(() => {
+    setPolicies(loaderPolicies);
+    setSelectedPolicyId((current) => {
+      if (loaderPolicies.some((policy) => policy.id === current)) {
+        return current;
+      }
+      return loaderPolicies[0]?.id ?? "";
+    });
+  }, [loaderPolicies]);
 
   useEffect(() => {
     setSyncBanner(null);
