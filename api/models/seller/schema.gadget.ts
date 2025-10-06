@@ -47,6 +47,7 @@ export const schema: GadgetModel = {
       validations: { required: true },
       storageKey: "wxIcpDNfEZ5O::CmeHZVHKxk_L",
     },
+    uid: { type: "roleList", storageKey: "ywPS2axxRy3s" },
     vendor: {
       type: "belongsTo",
       parent: { model: "vendor" },

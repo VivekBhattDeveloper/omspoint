@@ -114,6 +114,7 @@ const navigationSections: NavSection[] = [
     title: "Vendor Console",
     items: [
       { title: "Vendor Dashboard", path: "/vendor", icon: Gauge },
+      { title: "Products", path: "/vendor/products", icon: Boxes },
       { title: "Orders", path: "/vendor/orders", icon: ClipboardCheck },
       { title: "Print Jobs", path: "/vendor/print-jobs", icon: Printer },
       { title: "QA", path: "/vendor/qa", icon: ClipboardList },
@@ -131,6 +132,7 @@ const navigationSections: NavSection[] = [
     title: "Seller Console",
     items: [
       { title: "Seller Dashboard", path: "/seller", icon: Gauge },
+      { title: "Products", path: "/seller/products", icon: Boxes },
       { title: "Channels", path: "/seller/channels", icon: Network },
       { title: "Catalog", path: "/seller/catalog", icon: FolderCog },
       { title: "Assortments", path: "/seller/assortments", icon: Layers },
@@ -155,21 +157,61 @@ const navigationSections: NavSection[] = [
   },
 ];
 
+// Determine which nav sections are visible for the current user.
+// - Super Admin: Overview, Admin Console, Global
+// - Vendor: Overview, Vendor Console, Global
+// - Seller: Overview, Seller Console, Global
+// If multiple roles are present, sections are the union unless Super Admin is present,
+// in which case Admin-only set takes precedence.
+const getVisibleSectionTitles = (user: any | undefined, activeOrgId?: "hq" | "print" | "marketplace"): Set<string> => {
+  const titles = new Set<string>();
+
+  const roles: string[] = Array.isArray(user?.roles)
+    ? user.roles.map((r: any) =>
+        typeof r === "string" ? r : (r?.name ?? r?.key ?? "")
+      )
+    : [];
+
+  const hasRole = (name: string) => roles.some((r) => typeof r === "string" && r.toLowerCase() === name.toLowerCase());
+
+  // Super Admin: show sections based on selected org
+  if (hasRole("Super Admin")) {
+    if (activeOrgId === "print") return new Set(["Overview", "Vendor Console", "Global"]);
+    if (activeOrgId === "marketplace") return new Set(["Overview", "Seller Console", "Global"]);
+    return new Set(["Overview", "Admin Console", "Global"]);
+  }
+
+  // Vendor & Seller accumulate
+  if (hasRole("Vendor")) {
+    ["Overview", "Vendor Console", "Global"].forEach((t) => titles.add(t));
+  }
+  if (hasRole("Seller")) {
+    ["Overview", "Seller Console", "Global"].forEach((t) => titles.add(t));
+  }
+
+  // Fallback for generic signed-in users: show Overview + Global only
+  if (titles.size === 0) {
+    ["Overview", "Global"].forEach((t) => titles.add(t));
+  }
+
+  return titles;
+};
+
 // Mobile hamburger menu, uses Sheet for slide-out drawer
-export const MobileNav = () => {
+export const MobileNav = ({ user, activeOrgId }: { user?: any; activeOrgId?: "hq" | "print" | "marketplace" }) => {
   return (
     <div className="flex md:hidden">
-      <NavDrawer>{({ close }) => <Navigation onLinkClick={close} />}</NavDrawer>
+      <NavDrawer>{({ close }) => <Navigation user={user} activeOrgId={activeOrgId} onLinkClick={close} />}</NavDrawer>
     </div>
   );
 };
 
 // Desktop left nav bar
-export const DesktopNav = () => {
+export const DesktopNav = ({ user, activeOrgId }: { user?: any; activeOrgId?: "hq" | "print" | "marketplace" }) => {
   return (
     <div className="hidden md:flex w-64 flex-col fixed inset-y-0 z-30">
       <div className="flex flex-col flex-grow bg-background border-r h-full">
-        <Navigation />
+        <Navigation user={user} activeOrgId={activeOrgId} />
       </div>
     </div>
   );
@@ -204,8 +246,9 @@ const secondaryNavigationItems: NavItem[] = [
  * Renders navigationItems as vertical links with icons.
  */
 
-export const Navigation = ({ onLinkClick }: { onLinkClick?: () => void }) => {
+export const Navigation = ({ user, activeOrgId, onLinkClick }: { user?: any; activeOrgId?: "hq" | "print" | "marketplace"; onLinkClick?: () => void }) => {
   const location = useLocation();
+  const visible = getVisibleSectionTitles(user, activeOrgId);
 
   return (
     <>
@@ -215,7 +258,9 @@ export const Navigation = ({ onLinkClick }: { onLinkClick?: () => void }) => {
         </Link>
       </div>
       <nav className="flex-1 px-4 py-4 space-y-4 overflow-y-auto">
-        {navigationSections.map((section) => (
+        {navigationSections
+          .filter((section) => visible.has(section.title))
+          .map((section) => (
           <Fragment key={section.title}>
             <p className="px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wide">
               {section.title}

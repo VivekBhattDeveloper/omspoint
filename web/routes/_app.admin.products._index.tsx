@@ -117,7 +117,7 @@ export default function AdminProductsIndex({ loaderData }: Route.ComponentProps)
               {
                 header: "Description",
                 render: ({ record }) => (
-                  <span className="line-clamp-1">{record.productDescription ?? "—"}</span>
+                  <span className="line-clamp-1">{record.productDescription?.truncatedHTML ?? "—"}</span>
                 ),
               },
               {
@@ -133,7 +133,7 @@ export default function AdminProductsIndex({ loaderData }: Route.ComponentProps)
               id: true,
               productName: true,
               price: true,
-              productDescription: true,
+              productDescription: { markdown: true, truncatedHTML: true },
               order: {
                 id: true,
                 orderId: true,

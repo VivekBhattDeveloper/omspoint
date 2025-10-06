@@ -73,9 +73,9 @@ export default function VendorOrdersPage() {
               { header: "Seller", field: "seller.name" },
               {
                 header: "Total",
-                render: ({ record }) => currency.format(record.total ?? 0),
+                render: ({ record }) => currency.format(parseFloat(record.total || "0")),
               },
-              { header: "Placed", field: "orderDate" },
+              { header: "Order Date", field: "orderDate" },
             ]}
             select={{
               id: true,

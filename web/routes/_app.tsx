@@ -10,15 +10,16 @@
 //   - Handles redirecting logged out users to the sign-in page
 // To extend: update the navigation, header, or main content area as needed for your app's logged-in experience.
 
+import { useState } from "react";
 import { UserIcon } from "@/components/shared/UserIcon";
 import { DesktopNav, MobileNav, SecondaryNavigation } from "@/components/app/nav";
-import { GlobalSearch, HelpMenu, NotificationBell, OrgSwitcher } from "@/components/app/topbar";
-import { Outlet, redirect, useOutletContext } from "react-router";
+import { GlobalSearch, HelpMenu, NotificationBell, OrgSwitcher, organizations } from "@/components/app/topbar";
+import { Outlet, redirect, useNavigate, useOutletContext } from "react-router";
 import { ErrorBoundary } from "react-error-boundary";
 import type { RootOutletContext } from "../root";
 import type { Route } from "./+types/_app";
 
-export const loader = async ({ context }: Route.LoaderArgs) => {
+export const loader = async ({ context, request }: Route.LoaderArgs) => {
   const { session, gadgetConfig } = context;
 
   const userId = session?.get("user");
@@ -26,6 +27,50 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
 
   if (!user) {
     return redirect(gadgetConfig.authentication!.signInPath);
+  }
+
+  // Role-based route guard
+  const roles: string[] = Array.isArray((user as any)?.roles)
+    ? (user as any).roles.map((r: any) => (typeof r === "string" ? r : (r?.name ?? r?.key ?? "")))
+    : [];
+
+  const hasRole = (name: string) => roles.some((r) => typeof r === "string" && r.toLowerCase() === name.toLowerCase());
+
+  const pathname = new URL(request.url).pathname;
+
+  // Allowed path prefixes per role
+  let allowedPrefixes: string[] = ["/signed-in", "/profile", "/team", "/invite", "/help"]; // Global
+  let defaultRedirect = "/signed-in";
+
+  if (hasRole("Super Admin")) {
+    allowedPrefixes = [
+      ...allowedPrefixes,
+      "/admin",
+      "/vendor",
+      "/vendors",
+      "/seller",
+      "/sellers",
+    ];
+    defaultRedirect = "/admin";
+  } else if (hasRole("Vendor")) {
+    allowedPrefixes = [
+      ...allowedPrefixes,
+      "/vendor",
+      "/vendors",
+    ];
+    defaultRedirect = "/vendor";
+  } else if (hasRole("Seller")) {
+    allowedPrefixes = [
+      ...allowedPrefixes,
+      "/seller",
+      "/sellers",
+    ];
+    defaultRedirect = "/seller";
+  }
+
+  const allowed = allowedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
+  if (!allowed) {
+    return redirect(defaultRedirect);
   }
 
   return {
@@ -67,14 +112,35 @@ export default function ({ loaderData }: Route.ComponentProps) {
 
   const { user } = loaderData;
 
+  const roles: string[] = Array.isArray((user as any)?.roles)
+    ? (user as any).roles.map((r: any) => (typeof r === "string" ? r : (r?.name ?? r?.key ?? "")))
+    : [];
+  const isSuperAdmin = roles.some((r) => typeof r === "string" && r.toLowerCase() === "super admin".toLowerCase());
+  const isVendor = roles.some((r) => typeof r === "string" && r.toLowerCase() === "vendor");
+  const isSeller = roles.some((r) => typeof r === "string" && r.toLowerCase() === "seller");
+
+  // Default selected org
+  const defaultOrgId = isSuperAdmin ? "hq" : isVendor ? "print" : "marketplace";
+  const [activeOrgId, setActiveOrgId] = useState<typeof organizations[number]["id"]>(defaultOrgId);
+  const navigate = useNavigate();
+
   return (
     <div className="h-screen flex overflow-hidden">
-      <DesktopNav />
+      <DesktopNav user={user} activeOrgId={activeOrgId} />
 
       <div className="flex-1 flex flex-col md:pl-64 min-w-0">
         <header className="h-16 flex items-center gap-4 px-6 border-b bg-background z-10 w-full">
-          <MobileNav />
-          <OrgSwitcher />
+          <MobileNav user={user} activeOrgId={activeOrgId} />
+          <OrgSwitcher
+            user={user}
+            activeOrgId={activeOrgId}
+            onChange={(id) => {
+              setActiveOrgId(id);
+              if (id === "hq") navigate("/admin");
+              else if (id === "print") navigate("/vendor");
+              else if (id === "marketplace") navigate("/seller");
+            }}
+          />
           <GlobalSearch />
           <div className="hidden md:flex items-center gap-2 ml-auto">
             <NotificationBell />

@@ -14,6 +14,7 @@ export const schema: GadgetModel = {
       "address1",
       "address2",
       "addressVerified",
+      "checkouts",
       "city",
       "country",
       "countryCode",

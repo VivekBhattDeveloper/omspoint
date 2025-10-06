@@ -1,16 +1,3 @@
-# Learn more about working with Shopify TOML files with Gadget at https://docs.gadget.dev/guides/plugins/shopify/advanced-topics/shopify-app-toml
-
-client_id = "b38f8aa38683e67c7f87da01b0110917"
-name = "Multi Vendor OMS"
-application_url = "https://omspoint.gadget.app/api/shopify/install-or-render"
-embedded = true
-
-[auth]
-redirect_urls = ["https://omspoint.gadget.app/api/connections/auth/shopify/callback"]
-
-[webhooks]
-api_version = "2025-10"
-
-[[webhooks.subscriptions]]
-compliance_topics = [ "customers/data_request", "customers/redact" ,"shop/redact"]
-uri = "https://omspoint.gadget.app/api/webhooks/shopify"
+# This toml file is used for production. Only edit this file if you have a need for it
+# When you add a production config, values will be auto-populated here
+# Read more at https://docs.gadget.dev/guides/plugins/shopify/advanced-topics/shopify-app-toml

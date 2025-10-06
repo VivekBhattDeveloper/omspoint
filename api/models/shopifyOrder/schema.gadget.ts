@@ -25,6 +25,7 @@ export const schema: GadgetModel = {
       "cartDiscountAmountSet",
       "cartToken",
       "checkoutToken",
+      "checkouts",
       "clientDetails",
       "closed",
       "closedAt",

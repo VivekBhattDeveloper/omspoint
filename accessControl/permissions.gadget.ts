@@ -130,6 +130,15 @@ export const permissions: GadgetPermissions = {
         shopifyAppUsageRecord: {
           read: true,
         },
+        shopifyArticle: {
+          read: true,
+        },
+        shopifyBillingAddress: {
+          read: true,
+        },
+        shopifyBlog: {
+          read: true,
+        },
         shopifyBulkOperation: {
           read: true,
         },
@@ -139,10 +148,25 @@ export const permissions: GadgetPermissions = {
         shopifyCatalog: {
           read: true,
         },
+        shopifyCheckout: {
+          read: true,
+        },
+        shopifyCheckoutAppliedGiftCard: {
+          read: true,
+        },
+        shopifyCheckoutLineItem: {
+          read: true,
+        },
+        shopifyCheckoutShippingRate: {
+          read: true,
+        },
         shopifyCollect: {
           read: true,
         },
         shopifyCollection: {
+          read: true,
+        },
+        shopifyComment: {
           read: true,
         },
         shopifyCustomer: {
@@ -280,6 +304,9 @@ export const permissions: GadgetPermissions = {
         shopifyScriptTag: {
           read: true,
         },
+        shopifyShippingAddress: {
+          read: true,
+        },
         shopifyShippingLine: {
           read: true,
         },
@@ -298,9 +325,11 @@ export const permissions: GadgetPermissions = {
             changePassword: {
               filter: "accessControl/filters/user/tenant.gelly",
             },
+            signIn: true,
             signOut: {
               filter: "accessControl/filters/user/tenant.gelly",
             },
+            signUp: true,
             update: {
               filter: "accessControl/filters/user/tenant.gelly",
             },
@@ -374,6 +403,38 @@ export const permissions: GadgetPermissions = {
             update: true,
           },
         },
+        shopifyArticle: {
+          read: {
+            filter:
+              "accessControl/filters/shopify/shopifyArticle.gelly",
+          },
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyBillingAddress: {
+          read: {
+            filter:
+              "accessControl/filters/shopify/shopifyBillingAddress.gelly",
+          },
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyBlog: {
+          read: {
+            filter: "accessControl/filters/shopify/shopifyBlog.gelly",
+          },
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
         shopifyBulkOperation: {
           read: {
             filter:
@@ -410,6 +471,50 @@ export const permissions: GadgetPermissions = {
             update: true,
           },
         },
+        shopifyCheckout: {
+          read: {
+            filter:
+              "accessControl/filters/shopify/shopifyCheckout.gelly",
+          },
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckoutAppliedGiftCard: {
+          read: {
+            filter:
+              "accessControl/filters/shopify/shopifyCheckoutAppliedGiftCard.gelly",
+          },
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckoutLineItem: {
+          read: {
+            filter:
+              "accessControl/filters/shopify/shopifyCheckoutLineItem.gelly",
+          },
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckoutShippingRate: {
+          read: {
+            filter:
+              "accessControl/filters/shopify/shopifyCheckoutShippingRate.gelly",
+          },
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
         shopifyCollect: {
           read: {
             filter:
@@ -425,6 +530,17 @@ export const permissions: GadgetPermissions = {
           read: {
             filter:
               "accessControl/filters/shopify/shopifyCollection.gelly",
+          },
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyComment: {
+          read: {
+            filter:
+              "accessControl/filters/shopify/shopifyComment.gelly",
           },
           actions: {
             create: true,
@@ -924,6 +1040,17 @@ export const permissions: GadgetPermissions = {
             update: true,
           },
         },
+        shopifyShippingAddress: {
+          read: {
+            filter:
+              "accessControl/filters/shopify/shopifyShippingAddress.gelly",
+          },
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
         shopifyShippingLine: {
           read: {
             filter:
@@ -975,26 +1102,6 @@ export const permissions: GadgetPermissions = {
     },
     "shopify-storefront-customers": {
       storageKey: "Role-Shopify-Customer",
-      models: {
-        shopifyCustomer: {
-          read: {
-            filter:
-              "accessControl/filters/shopify/storefront-customers/shopifyCustomer.gelly",
-          },
-        },
-        shopifyCustomerAddress: {
-          read: {
-            filter:
-              "accessControl/filters/shopify/storefront-customers/shopifyCustomerAddress.gelly",
-          },
-        },
-        shopifyOrder: {
-          read: {
-            filter:
-              "accessControl/filters/shopify/storefront-customers/shopifyOrder.gelly",
-          },
-        },
-      },
     },
     unauthenticated: {
       storageKey: "unauthenticated",
@@ -1014,6 +1121,78 @@ export const permissions: GadgetPermissions = {
         },
         vendor: {
           read: true,
+        },
+      },
+    },
+    Vendor: {
+      storageKey: "3tijEwgZxlUR",
+    },
+    Seller: {
+      storageKey: "_eSe2T5A-5od",
+    },
+    "Super Admin": {
+      storageKey: "g5EWJBCs1B64",
+      default: {
+        read: true,
+        action: true,
+      },
+      models: {
+        alert: {
+          read: true,
+        },
+        approvalRequest: {
+          read: true,
+        },
+        attributeOption: {
+          read: true,
+        },
+        auditEvent: {
+          read: true,
+        },
+        calibrationRun: {
+          read: true,
+        },
+        catalogAttribute: {
+          read: true,
+        },
+        catalogValidation: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        complianceExport: {
+          read: true,
+        },
+        controlCheckpoint: {
+          read: true,
+        },
+        courierFeedback: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        featureFlag: {
+          read: true,
+        },
+        feeRule: {
+          read: true,
+        },
+        financeConfig: {
+          read: true,
+        },
+        financeReconciliation: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
         },
       },
     },

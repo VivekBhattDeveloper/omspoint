@@ -87,8 +87,10 @@
       • Import/Select (from PIM)
       • Assortments & Brand Rules
   ▸ Listings
+      • Sales Cjannel Products and App products, create new products
       • Publish/Withdraw, Compliance Checks
-  ▸ Orders (intake, edits/cancellations)
+
+  ▸ Orders (intake, edits/cancellations) from sale channel
   ▸ Designs
       • Add Designs
       • Index of design assigned to the products

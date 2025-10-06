@@ -21,7 +21,7 @@ export default function SellerOrdersPage() {
 
   const filter = useMemo(() => {
     if (!statusFilter) return undefined;
-    return { status: { equals: statusFilter } } as const;
+    return { financialStatus: { equals: statusFilter } } as const;
   }, [statusFilter]);
   const currency = useMemo(() => new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }), []);
 
@@ -34,7 +34,7 @@ export default function SellerOrdersPage() {
       <Card>
         <CardHeader>
           <CardTitle>Order inbox</CardTitle>
-          <CardDescription>Search by order ID, status, or vendor.</CardDescription>
+          <CardDescription>Search by order ID, status, or customer.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -51,37 +51,40 @@ export default function SellerOrdersPage() {
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="shipped">Shipped</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="authorized">Authorized</SelectItem>
+                <SelectItem value="partially_paid">Partially Paid</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="partially_refunded">Partially Refunded</SelectItem>
+                <SelectItem value="refunded">Refunded</SelectItem>
+                <SelectItem value="voided">Voided</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <AutoTable
-            model={api.order}
+            model={api.shopifyOrder}
             search={search}
             filter={filter}
             onClick={(record) => navigate(`/seller/orders/${record.id}`)}
             columns={[
-              { header: "Order ID", field: "orderId" },
+              { header: "Order ID", field: "name" },
               {
                 header: "Status",
-                render: ({ record }) => <StatusBadge status={record.status} />,
+                render: ({ record }) => <StatusBadge status={record.financialStatus} />,
               },
-              { header: "Vendor", field: "printJob.order.orderId", render: ({ record }) => record.printJob?.order?.orderId ?? "—" },
+              { header: "Customer", render: ({ record }) => record.customer?.displayName ?? "—" },
               {
                 header: "Total",
-                render: ({ record }) => currency.format(record.total ?? 0),
+                render: ({ record }) => currency.format(parseFloat(record.totalPrice ?? "0")),
               },
-              { header: "Placed", field: "orderDate" },
+              { header: "Placed", field: "processedAt" },
             ]}
             select={{
               id: true,
-              orderId: true,
-              status: true,
-              total: true,
-              orderDate: true,
-              printJob: { order: { orderId: true } },
+              name: true,
+              financialStatus: true,
+              totalPrice: true,
+              processedAt: true,
+              customer: { displayName: true },
             }}
           />
         </CardContent>
