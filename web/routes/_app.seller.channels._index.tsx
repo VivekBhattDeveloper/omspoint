@@ -1,15 +1,18 @@
 import { useMemo, useState } from "react";
+import type { CheckedState } from "@radix-ui/react-checkbox";
 import type { Route } from "./+types/_app.seller.channels._index";
 import { PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,8 +32,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
+import type {
+  ChannelPreference,
+  ChannelSla,
+  DispatchCommitment,
+  EscalationContact,
+  ReturnWindow,
+  WarehouseAddress,
+} from "@/data/channel-config";
+import { createChannelConfigSeed, dispatchOptions, returnWindowOptions } from "@/data/channel-config";
 import {
   Activity,
   AlertTriangle,
@@ -177,10 +196,15 @@ interface LoaderData {
     };
   };
   checklist: ChecklistItem[];
+  channelSlas: ChannelSla[];
+  channelPreferences: ChannelPreference[];
+  addresses: WarehouseAddress[];
+  contacts: EscalationContact[];
 }
 
 interface OrderRecord {
   id?: string | null;
+  channel?: string | null;
   orderDate?: string | null;
   status?: string | null;
   total?: number | null;
@@ -190,7 +214,7 @@ interface OrderRecord {
 
 const baseChannelDefinitions: ChannelDefinition[] = [
   {
-    key: "creditCard",
+    key: "Amazon",
     label: "Amazon Marketplace",
     provider: "Amazon Seller Central",
     mode: "OAuth App",
@@ -198,7 +222,7 @@ const baseChannelDefinitions: ChannelDefinition[] = [
     region: "North America",
   },
   {
-    key: "paypal",
+    key: "Shopify",
     label: "Shopify US",
     provider: "Shopify Plus",
     mode: "Private App Token",
@@ -206,7 +230,7 @@ const baseChannelDefinitions: ChannelDefinition[] = [
     region: "North America",
   },
   {
-    key: "bankTransfer",
+    key: "Walmart",
     label: "Walmart Marketplace",
     provider: "Walmart DSV",
     mode: "API Key",
@@ -214,7 +238,7 @@ const baseChannelDefinitions: ChannelDefinition[] = [
     region: "United States",
   },
   {
-    key: "square",
+    key: "Square",
     label: "Square Online",
     provider: "Square Partners",
     mode: "OAuth App",
@@ -222,7 +246,7 @@ const baseChannelDefinitions: ChannelDefinition[] = [
     region: "North America",
   },
   {
-    key: "etsy",
+    key: "Etsy",
     label: "Etsy Handmade",
     provider: "Etsy Developers",
     mode: "API Key",
@@ -263,6 +287,7 @@ const createAccumulator = (definition: ChannelDefinition): ChannelAccumulator =>
 
 export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderData> => {
   try {
+    const channelConfig = createChannelConfigSeed();
     const now = Date.now();
 
     const definitions = new Map<string, ChannelDefinition>(
@@ -306,6 +331,7 @@ export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderData>
         sort: { orderDate: "Descending" },
         select: {
           id: true,
+          channel: true,
           orderDate: true,
           status: true,
           total: true,
@@ -323,7 +349,7 @@ export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderData>
       if (!order) continue;
 
       try {
-        const channelKey = order.payment?.paymentMethod ?? "manual";
+        const channelKey = order.channel ?? "unassigned";
         const definition = ensureDefinition(channelKey);
         const accumulator = ensureAccumulator(channelKey, definition);
 
@@ -611,7 +637,7 @@ export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderData>
     if (!order) continue;
     
     try {
-      const channelKey = order.payment?.paymentMethod ?? "manual";
+      const channelKey = order.channel ?? "unassigned";
       const definition = ensureDefinition(channelKey);
       const timestamp = order.orderDate ? new Date(order.orderDate) : new Date(now - i * 90 * 60 * 1000);
 
@@ -755,6 +781,10 @@ export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderData>
       },
     },
     checklist,
+    channelSlas: channelConfig.channelSlas,
+    channelPreferences: channelConfig.preferences,
+    addresses: channelConfig.addresses,
+    contacts: channelConfig.contacts,
   };
   } catch (error) {
     console.error("Error loading channel data:", error);
@@ -779,10 +809,14 @@ export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderData>
           success24h: 0,
           failed24h: 0,
           successRate24h: 0,
-        },
       },
-      checklist: [],
-    };
+    },
+    checklist: [],
+    channelSlas: [],
+    channelPreferences: [],
+    addresses: [],
+    contacts: [],
+  };
   }
 };
 
@@ -860,8 +894,22 @@ const formatDateTime = (iso: string | null) => {
 };
 
 export default function SellerChannelsPage({ loaderData }: Route.ComponentProps) {
-  const { summary, channels, credentials, webhooks, checklist } = loaderData as LoaderData;
+  const {
+    summary,
+    channels,
+    credentials,
+    webhooks,
+    checklist,
+    channelSlas: initialChannelSlas,
+    channelPreferences: initialChannelPreferences,
+    addresses,
+    contacts,
+  } = loaderData as LoaderData;
 
+  const [channelSlas, setChannelSlas] = useState<ChannelSla[]>(() => initialChannelSlas.map((sla) => ({ ...sla })));
+  const [preferences, setPreferences] = useState<ChannelPreference[]>(() =>
+    initialChannelPreferences.map((pref) => ({ ...pref })),
+  );
   const [credentialToRotate, setCredentialToRotate] = useState<CredentialRecord | null>(null);
   const [channelDialogOpen, setChannelDialogOpen] = useState(false);
   const [channelDetail, setChannelDetail] = useState<ChannelConnectionRow | null>(null);
@@ -884,6 +932,52 @@ export default function SellerChannelsPage({ loaderData }: Route.ComponentProps)
   const closeChannelDialog = () => {
     setChannelDialogOpen(false);
     setChannelDetail(null);
+  };
+
+  const updateSla = <Key extends keyof ChannelSla>(id: string, key: Key, value: ChannelSla[Key]) => {
+    setChannelSlas((previous) =>
+      previous.map((sla) =>
+        sla.id === id
+          ? {
+              ...sla,
+              [key]: value,
+            }
+          : sla,
+      ),
+    );
+  };
+
+  const updatePreferenceBoolean = (
+    id: string,
+    key: keyof Pick<
+      ChannelPreference,
+      "orderSync" | "inventorySync" | "priceSync" | "notificationOps" | "notificationFinance"
+    >,
+    checked: CheckedState,
+  ) => {
+    setPreferences((previous) =>
+      previous.map((preference) =>
+        preference.id === id
+          ? {
+              ...preference,
+              [key]: Boolean(checked),
+            }
+          : preference,
+      ),
+    );
+  };
+
+  const updatePreferenceWarehouse = (id: string, warehouseId: string) => {
+    setPreferences((previous) =>
+      previous.map((preference) =>
+        preference.id === id
+          ? {
+              ...preference,
+              defaultWarehouseId: warehouseId,
+            }
+          : preference,
+      ),
+    );
   };
 
   return (
@@ -959,6 +1053,213 @@ export default function SellerChannelsPage({ loaderData }: Route.ComponentProps)
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Channel SLAs</CardTitle>
+          <CardDescription>Define dispatch commitments, return policies, and escalation routing per channel.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Channel</TableHead>
+                <TableHead>Dispatch commitment</TableHead>
+                <TableHead>Carrier pickup</TableHead>
+                <TableHead>Return window</TableHead>
+                <TableHead>Escalation owner</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {channelSlas.map((sla) => (
+                <TableRow key={sla.id}>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{sla.channel}</span>
+                        <Badge variant="outline">{sla.region}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{sla.orderCutoff}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={sla.dispatchCommitment}
+                      onValueChange={(value) => updateSla(sla.id, "dispatchCommitment", value as DispatchCommitment)}
+                    >
+                      <SelectTrigger className="h-9 w-[160px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {dispatchOptions.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      value={sla.carrierPickup}
+                      onChange={(event) => updateSla(sla.id, "carrierPickup", event.target.value)}
+                      className="h-9"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={sla.returnWindow}
+                      onValueChange={(value) => updateSla(sla.id, "returnWindow", value as ReturnWindow)}
+                    >
+                      <SelectTrigger className="h-9 w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {returnWindowOptions.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={sla.escalationContactId}
+                      onValueChange={(value) => updateSla(sla.id, "escalationContactId", value)}
+                    >
+                      <SelectTrigger className="h-9 w-[180px]">
+                        <SelectValue placeholder="Select contact" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contacts.map((contact) => (
+                          <SelectItem key={contact.id} value={contact.id}>
+                            {contact.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={sla.active}
+                        onCheckedChange={(checked) => updateSla(sla.id, "active", Boolean(checked))}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {sla.active ? "Active" : "Paused"}
+                      </span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Channel preferences</CardTitle>
+          <CardDescription>Toggle ingestion, sync jobs, and notification routing per channel.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Channel</TableHead>
+                <TableHead>Order import</TableHead>
+                <TableHead>Inventory sync</TableHead>
+                <TableHead>Price sync</TableHead>
+                <TableHead>Notifications</TableHead>
+                <TableHead>Default warehouse</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {preferences.map((preference) => {
+                const associatedSla = channelSlas.find((sla) => sla.id === preference.slaId);
+                return (
+                  <TableRow key={preference.id}>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{preference.channel}</span>
+                          {associatedSla && (
+                            <Badge variant={associatedSla.active ? "secondary" : "outline"}>
+                              {associatedSla.dispatchCommitment}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{preference.region}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={preference.orderSync}
+                        onCheckedChange={(checked) => updatePreferenceBoolean(preference.id, "orderSync", checked)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={preference.inventorySync}
+                        onCheckedChange={(checked) =>
+                          updatePreferenceBoolean(preference.id, "inventorySync", checked)
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={preference.priceSync}
+                        onCheckedChange={(checked) => updatePreferenceBoolean(preference.id, "priceSync", checked)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                        <label className="flex items-center gap-2">
+                          <Checkbox
+                            checked={preference.notificationOps}
+                            onCheckedChange={(checked) =>
+                              updatePreferenceBoolean(preference.id, "notificationOps", checked)
+                            }
+                          />
+                          Ops alerts
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <Checkbox
+                            checked={preference.notificationFinance}
+                            onCheckedChange={(checked) =>
+                              updatePreferenceBoolean(preference.id, "notificationFinance", checked)
+                            }
+                          />
+                          Finance alerts
+                        </label>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={preference.defaultWarehouseId}
+                        onValueChange={(value) => updatePreferenceWarehouse(preference.id, value)}
+                      >
+                        <SelectTrigger className="h-9 w-[220px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {addresses.map((address) => (
+                            <SelectItem key={address.id} value={address.id}>
+                              {address.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -1485,4 +1786,3 @@ export default function SellerChannelsPage({ loaderData }: Route.ComponentProps)
     </div>
   );
 }
-

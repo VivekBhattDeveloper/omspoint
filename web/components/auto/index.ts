@@ -1,11 +1,25 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
-import { Calendar } from "./ui/calendar";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
-import { Checkbox } from "./ui/checkbox";
+/**
+ * Centralized factory for Gadget auto components backed by our shadcn UI kit.
+ * Keep imports across the app pointing here so we can override behavior in one place if needed.
+ */
+import { makeAutocomponents, GadgetShadcnTailwindSafelist } from "@gadgetinc/react/auto/shadcn";
+import { toast } from "sonner";
+
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button as ShadcnButton } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox as ShadcnCheckbox } from "@/components/ui/checkbox";
 import {
   Command,
   CommandEmpty,
@@ -14,7 +28,7 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "./ui/command";
+} from "@/components/ui/command";
 import {
   Dialog,
   DialogClose,
@@ -26,7 +40,7 @@ import {
   DialogPortal,
   DialogTitle,
   DialogTrigger,
-} from "./ui/dialog";
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,21 +48,30 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Skeleton } from "./ui/skeleton";
-import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "./ui/table";
-import { Textarea } from "./ui/textarea";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
-import { cn } from "../lib/utils";
-import { makeAutocomponents, type ShadcnElements } from "@gadgetinc/react/auto/shadcn";
-import { toast } from "sonner";
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
-const elements: ShadcnElements = {
-  cn,
+// Type-safe wrappers to match Gadget's expected signatures
+const Button = ShadcnButton as any;
+const Checkbox = ShadcnCheckbox as any;
 
+const autoComponents = makeAutocomponents({
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -112,53 +135,10 @@ const elements: ShadcnElements = {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-};
+  cn,
+});
 
-const {
-  AutoButton,
-
-  AutoTable,
-
-  AutoForm,
-
-  AutoInput,
-  AutoBooleanInput,
-  AutoDateTimePicker,
-  AutoEmailInput,
-  AutoEncryptedStringInput,
-  AutoEnumInput,
-  AutoFileInput,
-  AutoHiddenInput,
-  AutoIdInput,
-  AutoJSONInput,
-  AutoNumberInput,
-  AutoPasswordInput,
-  AutoRichTextInput,
-  AutoRolesInput,
-  AutoStringInput,
-  AutoTextAreaInput,
-  AutoUrlInput,
-
-  AutoBelongsToInput,
-  AutoHasManyInput,
-  AutoHasManyThroughInput,
-  AutoHasOneInput,
-
-  AutoBelongsToForm,
-  AutoHasManyForm,
-  AutoHasManyThroughForm,
-  AutoHasManyThroughJoinModelForm,
-  AutoHasOneForm,
-
-  AutoSubmit,
-  SubmitErrorBanner,
-  SubmitResultBanner,
-  SubmitSuccessfulBanner,
-} = makeAutocomponents(elements);
-
-export {
-  AutoButton,
-  AutoTable,
+export const {
   AutoForm,
   AutoInput,
   AutoBooleanInput,
@@ -190,4 +170,8 @@ export {
   SubmitErrorBanner,
   SubmitResultBanner,
   SubmitSuccessfulBanner,
-};
+  AutoButton,
+  AutoTable,
+} = autoComponents;
+
+export { GadgetShadcnTailwindSafelist };

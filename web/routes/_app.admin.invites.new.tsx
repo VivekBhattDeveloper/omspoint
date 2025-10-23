@@ -28,7 +28,6 @@ export default function AdminInviteCreate() {
         <CardContent>
           <AutoForm
             action={api.invite.create}
-            include={["email", "inviteToken"]}
             onSuccess={() => navigate("/admin/invites")}
           >
             <SubmitResultBanner />

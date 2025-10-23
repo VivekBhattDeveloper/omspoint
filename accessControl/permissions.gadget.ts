@@ -104,6 +104,46 @@ export const permissions: GadgetPermissions = {
             update: true,
           },
         },
+        sellerProduct: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductOption: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductVariant: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductVariantMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
         shipment: {
           read: true,
           actions: {
@@ -336,6 +376,46 @@ export const permissions: GadgetPermissions = {
           },
         },
         vendor: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProduct: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductOption: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductVariant: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductVariantMedia: {
           read: true,
           actions: {
             create: true,
@@ -1126,6 +1206,11 @@ export const permissions: GadgetPermissions = {
     },
     Vendor: {
       storageKey: "3tijEwgZxlUR",
+      models: {
+        vendorProduct: {
+          read: true,
+        },
+      },
     },
     Seller: {
       storageKey: "_eSe2T5A-5od",
@@ -1187,6 +1272,86 @@ export const permissions: GadgetPermissions = {
           read: true,
         },
         financeReconciliation: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProduct: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductOption: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductVariant: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductVariantMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProduct: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductOption: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductVariant: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductVariantMedia: {
           read: true,
           actions: {
             create: true,

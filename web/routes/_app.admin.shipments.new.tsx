@@ -36,7 +36,6 @@ export default function AdminShipmentCreate() {
         <CardContent>
           <AutoForm
             action={api.shipment.create}
-            include={["trackingNumber", "shipmentMethod", "shipmentDate", "order"]}
             onSuccess={() => navigate("/admin/shipments")}
           >
             <SubmitResultBanner />

@@ -36,7 +36,6 @@ export default function AdminFinanceReconciliationCreate() {
         <CardContent>
           <AutoForm
             action={api.financeReconciliation.create}
-            include={["reconciliationId", "status", "reconciliationDate", "order"]}
             onSuccess={() => navigate("/admin/finance/reconciliation")}
           >
             <SubmitResultBanner />

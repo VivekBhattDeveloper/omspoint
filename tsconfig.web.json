@@ -6,6 +6,10 @@
     "web/**/.server/**/*",
     "web/**/.client/**/*"
   ],
+  "exclude": [
+    "web/api/models/**/*",
+    "api/models/**/*"
+  ],
   "compilerOptions": {
     "composite": true,
     "strict": true,

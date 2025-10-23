@@ -36,12 +36,12 @@ export default function AdminInviteDetail({ loaderData }: Route.ComponentProps) 
 
       <Card>
         <CardHeader>
-          <CardTitle>Invite details</CardTitle>
-          <CardDescription>Update the recipient email or token as needed.</CardDescription>
+          <CardTitle>Resend invite</CardTitle>
+          <CardDescription>Regenerate the invitation token and resend to the recipient.</CardDescription>
         </CardHeader>
         <CardContent>
           <AutoForm
-            action={api.invite.update}
+            action={api.invite.resend}
             findBy={invite.id}
             onSuccess={() => navigate("/admin/invites")}
           >
@@ -51,7 +51,7 @@ export default function AdminInviteDetail({ loaderData }: Route.ComponentProps) 
               <AutoInput field="inviteToken" />
             </div>
             <div className="flex items-center gap-2 pt-6">
-              <AutoSubmit>Save changes</AutoSubmit>
+              <AutoSubmit>Resend invite</AutoSubmit>
               <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                 Cancel
               </Button>

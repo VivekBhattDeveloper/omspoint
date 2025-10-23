@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Link, redirect } from "react-router";
 import { ChevronLeft } from "lucide-react";
 import { api } from "../api";
-import type { Route } from "./+types/_app.sellers.new";
+import type { Route } from "./+types/_app.admin.sellers.new";
 
 export const loader = async ({ context }: Route.LoaderArgs) => {
   // Load vendors for the vendor selection dropdown
@@ -27,7 +27,7 @@ export default function ({ loaderData }: Route.ComponentProps) {
       {/* Breadcrumb and Header */}
       <div className="flex items-center space-x-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/sellers" className="flex items-center space-x-2">
+          <Link to="/admin/sellers" className="flex items-center space-x-2">
             <ChevronLeft className="h-4 w-4" />
             <span>Back to Sellers</span>
           </Link>
@@ -57,20 +57,8 @@ export default function ({ loaderData }: Route.ComponentProps) {
           <AutoForm
             action={api.seller.create}
             onSuccess={() => {
-              // Redirect back to sellers list on success
-              window.location.href = "/sellers";
+              window.location.href = "/admin/sellers";
             }}
-            include={[
-              "name",
-              "email",
-              "phoneNumber",
-              "address",
-              "city",
-              "state",
-              "zip",
-              "country",
-              "vendor",
-            ]}
           >
             <div className="space-y-6">
               <SubmitResultBanner />
@@ -113,7 +101,7 @@ export default function ({ loaderData }: Route.ComponentProps) {
                   asChild
                   className="order-2 sm:order-1"
                 >
-                  <Link to="/sellers">Cancel</Link>
+                  <Link to="/admin/sellers">Cancel</Link>
                 </Button>
               </div>
             </div>

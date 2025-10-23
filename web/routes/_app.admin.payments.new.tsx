@@ -36,7 +36,6 @@ export default function AdminPaymentCreate() {
         <CardContent>
           <AutoForm
             action={api.payment.create}
-            include={["amount", "paymentMethod", "paymentDate", "order"]}
             onSuccess={() => navigate("/admin/payments")}
           >
             <SubmitResultBanner />

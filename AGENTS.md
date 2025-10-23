@@ -73,3 +73,10 @@
   - `.cursorrules/rules/*` – operating, repo, forms, and QA rules
 - Always align work to `.cursorrules` guidance. If you must deviate, document why and update the relevant context/rules so they remain the source of truth.
 - Keep diffs small, typed, and reversible; validate via the QA checklist in `.cursorrules/context/audit-template.md` before opening a PR.
+
+## Incident Log: Admin Print Jobs Loader
+- Impact: Admin print jobs route crashed when the Gadget client was unavailable and rendered nothing while masking the underlying loader failure.
+- Resolution: Loader now returns both KPI aggregates and a flattened job list, falling back to curated sample data with guarded error handling that both logs and surfaces the message in the UI (`web/routes/_app.admin.print-jobs._index.tsx:35`).
+- Preventive Measures: Replaced the `AutoTable` dependency with a local table to avoid missing provider requirements while keeping keyboard navigation, status badges, and date formatting intact (`web/routes/_app.admin.print-jobs._index.tsx:120`).
+- Operator Awareness: Added an in-page alert whenever sample data is displayed so the data source is obvious to admins (`web/routes/_app.admin.print-jobs._index.tsx:97`).
+- QA Follow-up: Playwright suites currently fail before exercising this view; rerun once the harness is green to confirm no regressions.

@@ -1,4 +1,4 @@
-import type { Route } from "./+types/_app.vendors.$id";
+import type { Route } from "./+types/_app.admin.vendors.$id";
 import { Link, useNavigate } from "react-router";
 import { useState } from "react";
 import { useAction } from "@gadgetinc/react";
@@ -60,19 +60,19 @@ export default function VendorDetail({ loaderData }: Route.ComponentProps) {
   const [{ fetching: deletingSeller, error: deleteSellerError }, deleteSeller] = useAction(api.seller.delete);
 
   const handleCancel = () => {
-    navigate("/vendors");
+    navigate("/admin/vendors");
   };
 
   const handleSuccess = () => {
     toast.success("Vendor updated successfully!");
-    navigate("/vendors");
+    navigate("/admin/vendors");
   };
 
   const handleDeleteVendor = async () => {
     try {
       await deleteVendor({ id: vendor.id });
       toast.success("Vendor deleted successfully!");
-      navigate("/vendors");
+      navigate("/admin/vendors");
     } catch (error) {
       toast.error("Failed to delete vendor. Please try again.");
     }
@@ -91,15 +91,14 @@ export default function VendorDetail({ loaderData }: Route.ComponentProps) {
   };
 
   const handleAddSeller = () => {
-    // Navigate to seller creation with vendor pre-selected
-    navigate(`/sellers/new?vendorId=${vendor.id}`);
+    navigate(`/admin/sellers/new?vendorId=${vendor.id}`);
   };
 
   return (
     <div className="container mx-auto py-8 space-y-6">
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link to="/vendors" className="hover:text-foreground">
+        <Link to="/admin/vendors" className="hover:text-foreground">
           Vendors
         </Link>
         <span>/</span>
@@ -114,7 +113,7 @@ export default function VendorDetail({ loaderData }: Route.ComponentProps) {
         </div>
         <div className="flex items-center space-x-2">
           <Button variant="outline" asChild>
-            <Link to="/vendors">← Back to Vendors</Link>
+            <Link to="/admin/vendors">← Back to Vendors</Link>
           </Button>
           <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
             <AlertDialogTrigger asChild>
@@ -197,7 +196,7 @@ export default function VendorDetail({ loaderData }: Route.ComponentProps) {
           <div className="flex items-center space-x-2">
             {vendor.sellers.edges.length > 0 && (
               <Button variant="outline" size="sm" asChild>
-                <Link to={`/vendors/${vendor.id}/sellers`}>
+            <Link to={`/admin/vendors/${vendor.id}/sellers`}>
                   View All Sellers
                 </Link>
               </Button>
@@ -232,7 +231,7 @@ export default function VendorDetail({ loaderData }: Route.ComponentProps) {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button variant="outline" size="sm" asChild>
-                      <Link to={`/sellers/${seller.id}`}>
+                      <Link to={`/admin/sellers/${seller.id}`}>
                         <Edit className="w-4 h-4 mr-1" />
                         Edit
                       </Link>

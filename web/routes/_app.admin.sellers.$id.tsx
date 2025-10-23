@@ -1,4 +1,4 @@
-import type { Route } from "./+types/_app.sellers.$id";
+import type { Route } from "./+types/_app.admin.sellers.$id";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { api } from "../api";
@@ -83,7 +83,7 @@ export default function ({ loaderData }: Route.ComponentProps) {
     try {
       await api.seller.delete(seller.id);
       toast.success("Seller deleted successfully");
-      navigate("/vendors");
+      navigate("/admin/sellers");
     } catch (error) {
       console.error("Error deleting seller:", error);
       toast.error("Failed to delete seller");
@@ -105,13 +105,13 @@ export default function ({ loaderData }: Route.ComponentProps) {
     <div className="space-y-6">
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link to="/vendors" className="hover:text-foreground">
-          Vendors
+        <Link to="/admin/sellers" className="hover:text-foreground">
+          Sellers
         </Link>
         <ChevronRight className="h-4 w-4" />
         {seller.vendor && (
           <>
-            <Link to={`/vendors/${seller.vendor.id}`} className="hover:text-foreground">
+            <Link to={`/admin/vendors/${seller.vendor.id}`} className="hover:text-foreground">
               {seller.vendor.name}
             </Link>
             <ChevronRight className="h-4 w-4" />
@@ -199,7 +199,7 @@ export default function ({ loaderData }: Route.ComponentProps) {
               <CardContent className="space-y-4">
                 <div>
                   <Link
-                    to={`/vendors/${seller.vendor.id}`}
+                    to={`/admin/vendors/${seller.vendor.id}`}
                     className="text-lg font-semibold hover:underline"
                   >
                     {seller.vendor.name}

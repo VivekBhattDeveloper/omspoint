@@ -48,6 +48,7 @@ import {
   PackageSearch,
   Settings,
   FileStack,
+  Paintbrush2,
   Truck,
   ClipboardCheck,
   Coins,
@@ -108,6 +109,8 @@ const navigationSections: NavSection[] = [
       { title: "Invites", path: "/admin/invites", icon: MailPlus },
       { title: "Observability", path: "/admin/observability", icon: Activity },
       { title: "Audit & Reports", path: "/admin/audit", icon: ClipboardList },
+      { title: "Vendor Directory", path: "/admin/vendors", icon: Building2 },
+      { title: "Seller Directory", path: "/admin/sellers", icon: Users },
     ],
   },
   {
@@ -125,7 +128,6 @@ const navigationSections: NavSection[] = [
       { title: "Finance", path: "/vendor/finance", icon: Coins },
       { title: "Reports", path: "/vendor/reports", icon: BarChart3 },
       { title: "Settings", path: "/vendor/settings", icon: Settings },
-      { title: "Vendor Directory", path: "/vendors", icon: Building2 },
     ],
   },
   {
@@ -138,12 +140,12 @@ const navigationSections: NavSection[] = [
       { title: "Assortments", path: "/seller/assortments", icon: Layers },
       { title: "Listings", path: "/seller/listings", icon: FileStack },
       { title: "Orders", path: "/seller/orders", icon: ShoppingCart },
+      { title: "Designs", path: "/seller/designs", icon: Paintbrush2 },
       { title: "Returns & RMA", path: "/seller/returns", icon: PackageSearch },
       { title: "Customer Service", path: "/seller/cs", icon: LifeBuoy },
       { title: "Finance", path: "/seller/finance", icon: Coins },
       { title: "Reports", path: "/seller/reports", icon: BarChart3 },
       { title: "Settings", path: "/seller/settings", icon: Settings },
-      { title: "Seller Directory", path: "/sellers", icon: Users },
     ],
   },
   {
@@ -168,8 +170,8 @@ const getVisibleSectionTitles = (user: any | undefined, activeOrgId?: "hq" | "pr
 
   const roles: string[] = Array.isArray(user?.roles)
     ? user.roles.map((r: any) =>
-        typeof r === "string" ? r : (r?.name ?? r?.key ?? "")
-      )
+      typeof r === "string" ? r : (r?.name ?? r?.key ?? "")
+    )
     : [];
 
   const hasRole = (name: string) => roles.some((r) => typeof r === "string" && r.toLowerCase() === name.toLowerCase());
@@ -261,31 +263,31 @@ export const Navigation = ({ user, activeOrgId, onLinkClick }: { user?: any; act
         {navigationSections
           .filter((section) => visible.has(section.title))
           .map((section) => (
-          <Fragment key={section.title}>
-            <p className="px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wide">
-              {section.title}
-            </p>
-            <div className="space-y-1">
-              {section.items.map((item) => {
-                const isActive = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={cn(
-                      "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
-                      isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"
-                    )}
-                    onClick={onLinkClick}
-                  >
-                    <item.icon className="mr-3 h-4 w-4" />
-                    {item.title}
-                  </Link>
-                );
-              })}
-            </div>
-          </Fragment>
-        ))}
+            <Fragment key={section.title}>
+              <p className="px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wide">
+                {section.title}
+              </p>
+              <div className="space-y-1">
+                {section.items.map((item) => {
+                  const isActive = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={cn(
+                        "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
+                        isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"
+                      )}
+                      onClick={onLinkClick}
+                    >
+                      <item.icon className="mr-3 h-4 w-4" />
+                      {item.title}
+                    </Link>
+                  );
+                })}
+              </div>
+            </Fragment>
+          ))}
       </nav>
     </>
   );

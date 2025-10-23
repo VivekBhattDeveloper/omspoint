@@ -28,68 +28,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Clock, Mail, MapPin, Phone, Plus, Trash2, Users } from "lucide-react";
 import type { CheckedState } from "@radix-ui/react-checkbox";
+import type {
+  AddressType,
+  ChannelSla,
+  EscalationContact,
+  WarehouseAddress,
+} from "@/data/channel-config";
+import {
+  cloneContacts,
+  createChannelConfigSeed,
+} from "@/data/channel-config";
 import type { Route } from "./+types/_app.seller.settings._index";
-
-type AddressType = "fulfillment" | "returns" | "pickup";
-
-type DispatchCommitment = "Same-day" | "24 hours" | "48 hours";
-
-type ReturnWindow = "30 days" | "45 days" | "60 days";
-
-interface WarehouseAddress {
-  id: string;
-  label: string;
-  type: AddressType;
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string;
-  pickupDays: string;
-  pickupWindow: string;
-  carrierCutoff: string;
-  isDefault: boolean;
-}
-
-interface EscalationContact {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  phone: string;
-  coverage: string;
-  channels: string[];
-  isPrimary: boolean;
-}
-
-interface ChannelSla {
-  id: string;
-  channel: string;
-  region: string;
-  orderCutoff: string;
-  dispatchCommitment: DispatchCommitment;
-  carrierPickup: string;
-  returnWindow: ReturnWindow;
-  escalationContactId: string;
-  active: boolean;
-}
-
-interface ChannelPreference {
-  id: string;
-  channel: string;
-  region: string;
-  orderSync: boolean;
-  inventorySync: boolean;
-  priceSync: boolean;
-  notificationOps: boolean;
-  notificationFinance: boolean;
-  defaultWarehouseId: string;
-  slaId: string;
-}
 
 interface AddressFormState {
   label: string;
@@ -124,188 +73,10 @@ const addressTypeLabels: Record<AddressType, string> = {
   pickup: "Pickup",
 };
 
-const dispatchOptions: DispatchCommitment[] = ["Same-day", "24 hours", "48 hours"];
-const returnWindowOptions: ReturnWindow[] = ["30 days", "45 days", "60 days"];
-
-const seedSellerAddresses: WarehouseAddress[] = [
-  {
-    id: "addr-nj",
-    label: "Primary Fulfillment Center",
-    type: "fulfillment",
-    addressLine1: "1200 Industrial Way",
-    addressLine2: "Suite 400",
-    city: "Newark",
-    state: "NJ",
-    postalCode: "07114",
-    country: "USA",
-    contactName: "Priya Desai",
-    contactEmail: "operations@merchx.com",
-    contactPhone: "+1 973-555-0110",
-    pickupDays: "Mon – Fri",
-    pickupWindow: "09:00 – 18:00 ET",
-    carrierCutoff: "UPS final pickup 18:30 ET",
-    isDefault: true,
-  },
-  {
-    id: "addr-ca",
-    label: "West Coast Returns Hub",
-    type: "returns",
-    addressLine1: "4550 Harbor Blvd",
-    addressLine2: "",
-    city: "Los Angeles",
-    state: "CA",
-    postalCode: "90021",
-    country: "USA",
-    contactName: "Miguel Alvarez",
-    contactEmail: "returns@merchx.com",
-    contactPhone: "+1 213-555-0174",
-    pickupDays: "Mon – Sat",
-    pickupWindow: "10:00 – 16:00 PT",
-    carrierCutoff: "FedEx Ground 15:30 PT",
-    isDefault: false,
-  },
-  {
-    id: "addr-il",
-    label: "Chicago Pickup Locker",
-    type: "pickup",
-    addressLine1: "233 W Ontario St",
-    addressLine2: "",
-    city: "Chicago",
-    state: "IL",
-    postalCode: "60654",
-    country: "USA",
-    contactName: "Locker Team",
-    contactEmail: "pickup@merchx.com",
-    contactPhone: "+1 312-555-0198",
-    pickupDays: "Wed – Sat",
-    pickupWindow: "12:00 – 20:00 CT",
-    carrierCutoff: "Self-serve drop before 19:45 CT",
-    isDefault: false,
-  },
-];
-
-const seedSellerContacts: EscalationContact[] = [
-  {
-    id: "contact-ops",
-    name: "Jordan Blake",
-    role: "Ops Duty Manager",
-    email: "jordan.blake@merchx.com",
-    phone: "+1 917-555-0129",
-    coverage: "Weekdays 07:00 – 22:00 ET",
-    channels: ["Shopify US", "Amazon Marketplace"],
-    isPrimary: true,
-  },
-  {
-    id: "contact-cs",
-    name: "Samira Patel",
-    role: "Customer Service Lead",
-    email: "samira.patel@merchx.com",
-    phone: "+1 415-555-0182",
-    coverage: "Weekends + Holidays",
-    channels: ["Etsy", "Amazon Marketplace"],
-    isPrimary: false,
-  },
-  {
-    id: "contact-fin",
-    name: "Emily Chen",
-    role: "Finance & Settlements",
-    email: "emily.chen@merchx.com",
-    phone: "+1 646-555-0156",
-    coverage: "Weekdays 09:00 – 17:00 ET",
-    channels: ["Shopify US"],
-    isPrimary: false,
-  },
-];
-
-const seedSellerSlas: ChannelSla[] = [
-  {
-    id: "sla-shopify",
-    channel: "Shopify US",
-    region: "North America",
-    orderCutoff: "Order by 17:00 ET",
-    dispatchCommitment: "24 hours",
-    carrierPickup: "UPS Ground",
-    returnWindow: "45 days",
-    escalationContactId: "contact-ops",
-    active: true,
-  },
-  {
-    id: "sla-amazon",
-    channel: "Amazon Marketplace",
-    region: "North America",
-    orderCutoff: "Order by 16:00 ET",
-    dispatchCommitment: "Same-day",
-    carrierPickup: "Amazon Buy Shipping",
-    returnWindow: "30 days",
-    escalationContactId: "contact-ops",
-    active: true,
-  },
-  {
-    id: "sla-etsy",
-    channel: "Etsy",
-    region: "North America",
-    orderCutoff: "Order by 14:00 ET",
-    dispatchCommitment: "48 hours",
-    carrierPickup: "USPS Priority",
-    returnWindow: "60 days",
-    escalationContactId: "contact-cs",
-    active: false,
-  },
-];
-
-const seedSellerPreferences: ChannelPreference[] = [
-  {
-    id: "pref-shopify",
-    channel: "Shopify US",
-    region: "United States",
-    orderSync: true,
-    inventorySync: true,
-    priceSync: false,
-    notificationOps: true,
-    notificationFinance: true,
-    defaultWarehouseId: "addr-nj",
-    slaId: "sla-shopify",
-  },
-  {
-    id: "pref-amazon",
-    channel: "Amazon Marketplace",
-    region: "United States",
-    orderSync: true,
-    inventorySync: true,
-    priceSync: true,
-    notificationOps: true,
-    notificationFinance: false,
-    defaultWarehouseId: "addr-nj",
-    slaId: "sla-amazon",
-  },
-  {
-    id: "pref-etsy",
-    channel: "Etsy",
-    region: "United States",
-    orderSync: true,
-    inventorySync: false,
-    priceSync: false,
-    notificationOps: false,
-    notificationFinance: false,
-    defaultWarehouseId: "addr-ca",
-    slaId: "sla-etsy",
-  },
-];
-
-const cloneContacts = (contacts: EscalationContact[]) =>
-  contacts.map((contact) => ({ ...contact, channels: [...contact.channels] }));
-
-const createSeedSellerSettings = () => ({
-  addresses: seedSellerAddresses.map((address) => ({ ...address })),
-  contacts: cloneContacts(seedSellerContacts),
-  channelSlas: seedSellerSlas.map((sla) => ({ ...sla })),
-  preferences: seedSellerPreferences.map((pref) => ({ ...pref })),
-});
-
 const loadSellerSettings = async (context: Route.LoaderArgs["context"]) => {
   void context;
   // TODO: Replace seed data with seller settings fetched from finance/SLA services once APIs are available.
-  return createSeedSellerSettings();
+  return createChannelConfigSeed();
 };
 
 export const loader = async ({ context }: Route.LoaderArgs) => loadSellerSettings(context);
@@ -314,7 +85,6 @@ export default function SellerSettingsPage({ loaderData }: Route.ComponentProps)
   const [addresses, setAddresses] = useState<WarehouseAddress[]>(() => loaderData.addresses.map((address) => ({ ...address })));
   const [contacts, setContacts] = useState<EscalationContact[]>(() => cloneContacts(loaderData.contacts));
   const [channelSlas, setChannelSlas] = useState<ChannelSla[]>(() => loaderData.channelSlas.map((sla) => ({ ...sla })));
-  const [preferences, setPreferences] = useState<ChannelPreference[]>(() => loaderData.preferences.map((pref) => ({ ...pref })));
 
   const [addressDialogOpen, setAddressDialogOpen] = useState(false);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
@@ -567,54 +337,11 @@ export default function SellerSettingsPage({ loaderData }: Route.ComponentProps)
     toast.success("Escalation contact removed");
   };
 
-  const updateSla = <Key extends keyof ChannelSla>(id: string, key: Key, value: ChannelSla[Key]) => {
-    setChannelSlas((prev) =>
-      prev.map((sla) =>
-        sla.id === id
-          ? {
-            ...sla,
-            [key]: value,
-          }
-          : sla,
-      ),
-    );
-  };
-
-  const updatePreferenceBoolean = (
-    id: string,
-    key: keyof Pick<ChannelPreference, "orderSync" | "inventorySync" | "priceSync" | "notificationOps" | "notificationFinance">,
-    checked: CheckedState,
-  ) => {
-    setPreferences((prev) =>
-      prev.map((pref) =>
-        pref.id === id
-          ? {
-            ...pref,
-            [key]: Boolean(checked),
-          }
-          : pref,
-      ),
-    );
-  };
-
-  const updatePreferenceWarehouse = (id: string, warehouseId: string) => {
-    setPreferences((prev) =>
-      prev.map((pref) =>
-        pref.id === id
-          ? {
-            ...pref,
-            defaultWarehouseId: warehouseId,
-          }
-          : pref,
-      ),
-    );
-  };
-
   return (
     <div className="space-y-6">
       <PageHeader
         title="Seller Settings"
-        description="Maintain addresses, SLAs, escalation contacts, and channel preferences."
+        description="Maintain addresses and escalation contacts for seller operations."
       />
 
       <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
@@ -1091,206 +818,6 @@ export default function SellerSettingsPage({ loaderData }: Route.ComponentProps)
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Channel SLAs</CardTitle>
-          <CardDescription>Define dispatch commitments, return policies, and escalation routing per channel.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Channel</TableHead>
-                <TableHead>Dispatch commitment</TableHead>
-                <TableHead>Carrier pickup</TableHead>
-                <TableHead>Return window</TableHead>
-                <TableHead>Escalation owner</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {channelSlas.map((sla) => (
-                <TableRow key={sla.id}>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium">{sla.channel}</span>
-                        <Badge variant="outline">{sla.region}</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{sla.orderCutoff}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={sla.dispatchCommitment}
-                      onValueChange={(value) => updateSla(sla.id, "dispatchCommitment", value as DispatchCommitment)}
-                    >
-                      <SelectTrigger className="h-9 w-[160px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {dispatchOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={sla.carrierPickup}
-                      onChange={(event) => updateSla(sla.id, "carrierPickup", event.target.value)}
-                      className="h-9"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={sla.returnWindow}
-                      onValueChange={(value) => updateSla(sla.id, "returnWindow", value as ReturnWindow)}
-                    >
-                      <SelectTrigger className="h-9 w-[140px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {returnWindowOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={sla.escalationContactId}
-                      onValueChange={(value) => updateSla(sla.id, "escalationContactId", value)}
-                    >
-                      <SelectTrigger className="h-9 w-[180px]">
-                        <SelectValue placeholder="Select contact" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {contacts.map((contact) => (
-                          <SelectItem key={contact.id} value={contact.id}>
-                            {contact.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={sla.active}
-                        onCheckedChange={(checked) => updateSla(sla.id, "active", Boolean(checked))}
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {sla.active ? "Active" : "Paused"}
-                      </span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Channel preferences</CardTitle>
-          <CardDescription>Toggle ingestion, sync jobs, and notification routing per channel.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Channel</TableHead>
-                <TableHead>Order import</TableHead>
-                <TableHead>Inventory sync</TableHead>
-                <TableHead>Price sync</TableHead>
-                <TableHead>Notifications</TableHead>
-                <TableHead>Default warehouse</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {preferences.map((pref) => {
-                const associatedSla = channelSlas.find((sla) => sla.id === pref.slaId);
-                return (
-                  <TableRow key={pref.id}>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{pref.channel}</span>
-                          {associatedSla && (
-                            <Badge variant={associatedSla.active ? "secondary" : "outline"}>
-                              {associatedSla.dispatchCommitment}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">{pref.region}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Checkbox
-                        checked={pref.orderSync}
-                        onCheckedChange={(checked) => updatePreferenceBoolean(pref.id, "orderSync", checked)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Checkbox
-                        checked={pref.inventorySync}
-                        onCheckedChange={(checked) => updatePreferenceBoolean(pref.id, "inventorySync", checked)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Checkbox
-                        checked={pref.priceSync}
-                        onCheckedChange={(checked) => updatePreferenceBoolean(pref.id, "priceSync", checked)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                        <label className="flex items-center gap-2">
-                          <Checkbox
-                            checked={pref.notificationOps}
-                            onCheckedChange={(checked) => updatePreferenceBoolean(pref.id, "notificationOps", checked)}
-                          />
-                          Ops alerts
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <Checkbox
-                            checked={pref.notificationFinance}
-                            onCheckedChange={(checked) => updatePreferenceBoolean(pref.id, "notificationFinance", checked)}
-                          />
-                          Finance alerts
-                        </label>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={pref.defaultWarehouseId}
-                        onValueChange={(value) => updatePreferenceWarehouse(pref.id, value)}
-                      >
-                        <SelectTrigger className="h-9 w-[220px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {addresses.map((address) => (
-                            <SelectItem key={address.id} value={address.id}>
-                              {address.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
   );
 }

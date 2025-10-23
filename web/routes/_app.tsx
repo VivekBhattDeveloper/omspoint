@@ -25,8 +25,10 @@ export const loader = async ({ context, request }: Route.LoaderArgs) => {
   const userId = session?.get("user");
   const user = userId ? await context.api.user.findOne(userId) : undefined;
 
+  const signInPath = gadgetConfig?.authentication?.signInPath ?? "/sign-in";
+
   if (!user) {
-    return redirect(gadgetConfig.authentication!.signInPath);
+    return redirect(signInPath);
   }
 
   // Role-based route guard
@@ -47,23 +49,23 @@ export const loader = async ({ context, request }: Route.LoaderArgs) => {
       ...allowedPrefixes,
       "/admin",
       "/vendor",
-      "/vendors",
+      "/admin/vendors",
       "/seller",
-      "/sellers",
+      "/admin/sellers",
     ];
     defaultRedirect = "/admin";
   } else if (hasRole("Vendor")) {
     allowedPrefixes = [
       ...allowedPrefixes,
       "/vendor",
-      "/vendors",
+      "/admin/vendors",
     ];
     defaultRedirect = "/vendor";
   } else if (hasRole("Seller")) {
     allowedPrefixes = [
       ...allowedPrefixes,
       "/seller",
-      "/sellers",
+      "/admin/sellers",
     ];
     defaultRedirect = "/seller";
   }

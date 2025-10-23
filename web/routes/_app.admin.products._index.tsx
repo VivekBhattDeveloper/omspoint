@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { PageHeader } from "@/components/app/page-header";
-import { AutoTable } from "@/components/auto";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { api } from "../api";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus } from "lucide-react";
 import type { Route } from "./+types/_app.admin.products._index";
 
@@ -16,32 +16,109 @@ type ProductStats = {
   averagePrice: number;
 };
 
-export const loader = async ({ context }: Route.LoaderArgs) => {
-  const records = await context.api.product.findMany({
-    select: {
-      id: true,
-      price: true,
-      order: { id: true },
-    },
-    first: 250,
-  });
+type LoaderProduct = {
+  id: string;
+  name: string;
+  price: number | null;
+  orderId: string | null;
+  descriptionHTML: string | null;
+  isAttached: boolean;
+};
 
-  const total = records.length;
-  const attached = records.filter((record) => Boolean(record.order?.id)).length;
+type LoaderResult = {
+  stats: ProductStats;
+  products: LoaderProduct[];
+  isSample: boolean;
+  errorMessage?: string;
+};
+
+const sampleProducts: LoaderProduct[] = [
+  {
+    id: "sample-1",
+    name: "MerchX Premium Hoodie",
+    price: 68,
+    orderId: "ORD-1024",
+    descriptionHTML: "French terry zip hoodie with embroidered logo accents.",
+    isAttached: true,
+  },
+  {
+    id: "sample-2",
+    name: "SolarFlex Travel Bottle",
+    price: 28,
+    orderId: null,
+    descriptionHTML: "Insulated stainless steel bottle with leak-proof flip straw.",
+    isAttached: false,
+  },
+  {
+    id: "sample-3",
+    name: "Atlas Pro Backpack",
+    price: 94,
+    orderId: "ORD-1007",
+    descriptionHTML: "Water-resistant shell, padded laptop sleeve, and quick-access pockets.",
+    isAttached: true,
+  },
+];
+
+const calculateStats = (products: LoaderProduct[]): ProductStats => {
+  const total = products.length;
+  const attached = products.filter((product) => product.isAttached).length;
   const unattached = total - attached;
-  const sumPrice = records.reduce((sum, record) => sum + (record.price ?? 0), 0);
+  const sumPrice = products.reduce((sum, product) => sum + (product.price ?? 0), 0);
   const averagePrice = total ? sumPrice / total : 0;
 
-  return {
-    stats: { total, attached, unattached, averagePrice } satisfies ProductStats,
-  };
+  return { total, attached, unattached, averagePrice };
+};
+
+export const loader = async ({ context }: Route.LoaderArgs) => {
+  try {
+    const records = await context.api.product.findMany({
+      select: {
+        id: true,
+        productName: true,
+        price: true,
+        productDescription: { truncatedHTML: true },
+        order: { id: true, orderId: true },
+      },
+      sort: { createdAt: "Descending" },
+      first: 250,
+    });
+
+    const products: LoaderProduct[] = records.map((record, index) => ({
+      id: record.id ?? `product-${index}`,
+      name: record.productName ?? "Untitled product",
+      price: typeof record.price === "number" ? record.price : null,
+      orderId: record.order?.orderId ?? null,
+      descriptionHTML: record.productDescription?.truncatedHTML ?? null,
+      isAttached: Boolean(record.order?.id),
+    }));
+
+    return {
+      stats: calculateStats(products),
+      products,
+      isSample: false,
+    } satisfies LoaderResult;
+  } catch (error) {
+    console.error("Failed to load products catalog", error);
+
+    return {
+      stats: calculateStats(sampleProducts),
+      products: sampleProducts,
+      isSample: true,
+      errorMessage: error instanceof Error ? error.message : undefined,
+    } satisfies LoaderResult;
+  }
 };
 
 export default function AdminProductsIndex({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
   const currency = useMemo(() => new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }), []);
   const number = useMemo(() => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }), []);
-  const { stats } = loaderData;
+  const { stats, products, isSample, errorMessage } = loaderData;
+  const hasProducts = products.length > 0;
+
+  const handleRowActivate = (productId: string) => {
+    navigate(`/admin/products/${productId}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -55,6 +132,16 @@ export default function AdminProductsIndex({ loaderData }: Route.ComponentProps)
           </Button>
         }
       />
+
+      {isSample && (
+        <Alert>
+          <AlertTitle>Sample dataset</AlertTitle>
+          <AlertDescription>
+            Unable to load catalog records from the API. Displaying sample data instead.
+            {errorMessage ? ` Error: ${errorMessage}` : ""}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -99,47 +186,60 @@ export default function AdminProductsIndex({ loaderData }: Route.ComponentProps)
           <CardDescription>Centralized source of truth for SKUs flowing through the OMS.</CardDescription>
         </CardHeader>
         <CardContent>
-          <AutoTable
-            model={api.product}
-            onClick={(product) => navigate(`/admin/products/${product.id}`)}
-            columns={[
-              { header: "Name", field: "productName" },
-              {
-                header: "Price",
-                render: ({ record }) => (
-                  <span className="tabular-nums">{currency.format(record.price ?? 0)}</span>
-                ),
-              },
-              {
-                header: "Order",
-                render: ({ record }) => record.order?.orderId ?? "—",
-              },
-              {
-                header: "Description",
-                render: ({ record }) => (
-                  <span className="line-clamp-1">{record.productDescription?.truncatedHTML ?? "—"}</span>
-                ),
-              },
-              {
-                header: "Status",
-                render: ({ record }) => (
-                  <Badge variant="outline" className="capitalize">
-                    {record.order ? "Attached" : "Unassigned"}
-                  </Badge>
-                ),
-              },
-            ]}
-            select={{
-              id: true,
-              productName: true,
-              price: true,
-              productDescription: { markdown: true, truncatedHTML: true },
-              order: {
-                id: true,
-                orderId: true,
-              },
-            }}
-          />
+          {hasProducts ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Order</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {products.map((product) => (
+                  <TableRow
+                    key={product.id}
+                    tabIndex={0}
+                    onClick={() => handleRowActivate(product.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handleRowActivate(product.id);
+                      }
+                    }}
+                    className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  >
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell>
+                      <span className="tabular-nums">
+                        {currency.format(product.price ?? 0)}
+                      </span>
+                    </TableCell>
+                    <TableCell>{product.orderId ?? "—"}</TableCell>
+                    <TableCell className="max-w-md">
+                      {product.descriptionHTML ? (
+                        <div
+                          className="line-clamp-1 text-muted-foreground"
+                          dangerouslySetInnerHTML={{ __html: product.descriptionHTML }}
+                        />
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize">
+                        {product.isAttached ? "Attached" : "Unassigned"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="py-8 text-center text-muted-foreground">No products found.</div>
+          )}
         </CardContent>
       </Card>
     </div>

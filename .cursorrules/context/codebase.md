@@ -18,6 +18,7 @@ Key Directories
   - `schema.gadget.ts` – Model schema definitions.
   - `actions/*.ts` – Server-side actions for create/update/delete and domain behaviors.
   - Example models: `order`, `shipment`, `product`, `vendor`, `user`, `catalogValidation`, etc.
+  - Seller/Vendor product stack: `sellerProduct` + `sellerProductVariant|Media|Option` and `vendorProduct` + `vendorProductVariant|Media|Option` mirror Shopify data and add channel metadata (`channel`, `channelProductId`), vendor references, generated imagery, and design ids.
 
 - `accessControl/` – Roles, permissions, and filters
   - `permissions.gadget.ts` – Role-to-model grants; action-level filters.
@@ -53,8 +54,11 @@ Commands
 - Unit tests: `yarn test:unit`
 - E2E tests: `yarn test:e2e`
 
+Utilities
+- `api/utils/productSync.ts` normalizes Shopify payloads into upsert inputs for seller/vendor products and variants.
+- `api/utils/titleValidation.ts` provides default titles/handles/SKUs when syncing product data without explicit values.
+
 References
 - `web/root.tsx` – App wiring with `GadgetProvider` and `Toaster`.
 - `web/api.ts` – Client instantiation for API calls.
 - `accessControl/permissions.gadget.ts` – Role grants and tenant filters.
-

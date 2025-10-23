@@ -7,6 +7,22 @@ export const schema: GadgetModel = {
   type: "gadget/model-schema/v1",
   storageKey: "rQFjv7w4ep2Y",
   fields: {
+    channel: {
+      type: "enum",
+      acceptMultipleSelections: false,
+      acceptUnlistedOptions: false,
+      options: [
+        "Amazon",
+        "Shopify",
+        "Walmart",
+        "Etsy",
+        "Square",
+        "Direct",
+        "Other",
+      ],
+      validations: { required: true },
+      storageKey: "EjBZLSyAplLd",
+    },
     financeReconciliation: {
       type: "hasOne",
       child: {

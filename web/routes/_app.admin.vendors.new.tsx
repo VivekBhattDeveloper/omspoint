@@ -9,12 +9,12 @@ export default function NewVendor() {
 
   const handleSuccess = (record: any) => {
     // Redirect to the vendor detail page after successful creation
-    navigate(`/vendors/${record.id}`);
+    navigate(`/admin/vendors/${record.id}`);
   };
 
   const handleCancel = () => {
     // Navigate back to the vendors listing page
-    navigate("/vendors");
+    navigate("/admin/vendors");
   };
 
   return (

@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { PageHeader } from "@/components/app/page-header";
-import { AutoTable } from "@/components/auto";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { api } from "../api";
 import { Plus } from "lucide-react";
@@ -22,41 +23,112 @@ type ReconciliationStats = {
   latestRun?: string | null;
 };
 
-export const loader = async ({ context }: Route.LoaderArgs) => {
-  const runs = await context.api.financeReconciliation.findMany({
-    select: {
-      id: true,
-      status: true,
-      reconciliationDate: true,
-    },
-    sort: { reconciliationDate: "Descending" },
-    first: 250,
-  });
+type LoaderReconciliation = {
+  id: string;
+  reconciliationId: string | null;
+  status: string | null;
+  reconciliationDate: string | null;
+  orderId: string | null;
+};
 
+type LoaderResult = {
+  stats: ReconciliationStats;
+  runs: LoaderReconciliation[];
+  isSample: boolean;
+  errorMessage?: string;
+};
+
+const sampleRuns: LoaderReconciliation[] = [
+  {
+    id: "recon-sample-1",
+    reconciliationId: "RECON-2024-03-01-A",
+    status: "complete",
+    reconciliationDate: "2024-03-01T10:00:00.000Z",
+    orderId: "ORD-1124",
+  },
+  {
+    id: "recon-sample-2",
+    reconciliationId: "RECON-2024-02-29-B",
+    status: "pending",
+    reconciliationDate: "2024-02-29T14:30:00.000Z",
+    orderId: "ORD-1118",
+  },
+  {
+    id: "recon-sample-3",
+    reconciliationId: "RECON-2024-02-28-C",
+    status: "failed",
+    reconciliationDate: "2024-02-28T08:45:00.000Z",
+    orderId: "ORD-1109",
+  },
+];
+
+const computeStats = (runs: LoaderReconciliation[]): ReconciliationStats => {
   const total = runs.length;
   const statusCounts = runs.reduce<Record<string, number>>((counts, run) => {
     const status = run.status ?? "unknown";
     counts[status] = (counts[status] ?? 0) + 1;
     return counts;
   }, {});
-  const latestRun = runs[0]?.reconciliationDate ?? null;
+  const latestRun = runs
+    .map((run) => run.reconciliationDate)
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .reverse()[0] ?? null;
 
-  return {
-    stats: { total, statusCounts, latestRun } satisfies ReconciliationStats,
-  };
+  return { total, statusCounts, latestRun };
+};
+
+export const loader = async ({ context }: Route.LoaderArgs) => {
+  try {
+    const runs = await context.api.financeReconciliation.findMany({
+      select: {
+        id: true,
+        reconciliationId: true,
+        status: true,
+        reconciliationDate: true,
+        order: { orderId: true },
+      },
+      sort: { reconciliationDate: "Descending" },
+      first: 250,
+    });
+
+    const records: LoaderReconciliation[] = runs.map((run, index) => ({
+      id: run.id ?? `finance-recon-${index}`,
+      reconciliationId: run.reconciliationId ?? null,
+      status: run.status ?? null,
+      reconciliationDate: run.reconciliationDate ?? null,
+      orderId: run.order?.orderId ?? null,
+    }));
+
+    return {
+      stats: computeStats(records),
+      runs: records,
+      isSample: false,
+    } satisfies LoaderResult;
+  } catch (error) {
+    console.error("Failed to load finance reconciliation runs", error);
+
+    return {
+      stats: computeStats(sampleRuns),
+      runs: sampleRuns,
+      isSample: true,
+      errorMessage: error instanceof Error ? error.message : undefined,
+    } satisfies LoaderResult;
+  }
 };
 
 export default function AdminFinanceReconciliationIndex({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
   const dateTime = useMemo(() => new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }), []);
   const number = useMemo(() => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }), []);
-  const { stats } = loaderData;
+  const { stats, runs, isSample, errorMessage } = loaderData;
   const statusEntries = Object.entries(stats.statusCounts).sort(([, aCount], [, bCount]) => bCount - aCount);
 
   const humanizeStatus = (status?: string | null) => {
     if (!status) return "—";
     return status.replace(/[_-]/g, " ");
   };
+  const hasRuns = runs.length > 0;
 
   return (
     <div className="space-y-6">
@@ -70,6 +142,16 @@ export default function AdminFinanceReconciliationIndex({ loaderData }: Route.Co
           </Button>
         }
       />
+
+      {isSample && (
+        <Alert>
+          <AlertTitle>Sample dataset</AlertTitle>
+          <AlertDescription>
+            Unable to load reconciliation runs from the API. Showing sample runs instead.
+            {errorMessage ? ` Error: ${errorMessage}` : ""}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -114,51 +196,53 @@ export default function AdminFinanceReconciliationIndex({ loaderData }: Route.Co
           <CardDescription>Review reconciliation batches and investigate variances.</CardDescription>
         </CardHeader>
         <CardContent>
-          <AutoTable
-            model={api.financeReconciliation}
-            onClick={(record) => navigate(`/admin/finance/reconciliation/${record.id}`)}
-            columns={[
-              { header: "Reconciliation ID", field: "reconciliationId" },
-              {
-                header: "Status",
-                render: ({ record }) => {
-                  const statusKey = record.status ? record.status.toLowerCase() : "";
+          {hasRuns ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Reconciliation ID</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Run date</TableHead>
+                  <TableHead>Order</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {runs.map((run) => {
+                  const statusKey = run.status ? run.status.toLowerCase() : "";
                   return (
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "uppercase tracking-wide text-xs",
-                        reconciliationStatusClasses[statusKey] ?? ""
-                      )}
+                    <TableRow
+                      key={run.id}
+                      tabIndex={0}
+                      className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                      onClick={() => navigate(`/admin/finance/reconciliation/${run.id}`)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          navigate(`/admin/finance/reconciliation/${run.id}`);
+                        }
+                      }}
                     >
-                      {humanizeStatus(record.status)}
-                    </Badge>
+                      <TableCell className="font-medium">{run.reconciliationId ?? "—"}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={cn("uppercase tracking-wide text-xs", reconciliationStatusClasses[statusKey] ?? "")}
+                        >
+                          {humanizeStatus(run.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {run.reconciliationDate ? dateTime.format(new Date(run.reconciliationDate)) : "—"}
+                      </TableCell>
+                      <TableCell>{run.orderId ?? "—"}</TableCell>
+                    </TableRow>
                   );
-                },
-              },
-              {
-                header: "Run date",
-                render: ({ record }) =>
-                  record.reconciliationDate
-                    ? dateTime.format(new Date(record.reconciliationDate))
-                    : "—",
-              },
-              {
-                header: "Order",
-                render: ({ record }) => record.order?.orderId ?? "—",
-              },
-            ]}
-            select={{
-              id: true,
-              reconciliationId: true,
-              status: true,
-              reconciliationDate: true,
-              order: {
-                id: true,
-                orderId: true,
-              },
-            }}
-          />
+                })}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="py-8 text-center text-muted-foreground">No reconciliation runs recorded.</div>
+          )}
         </CardContent>
       </Card>
     </div>

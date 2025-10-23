@@ -198,6 +198,12 @@ bash
 ggt add model conversation
 ggt add model message
 ggt add model chatSession
+
+## 14) Seller & Vendor Product Models
+- The custom `sellerProduct` model mirrors the Shopify product shape and adds channel enrichment (`channel`, `channelProductId`, `vendorCode`, `generatedImages`, `designId`) for marketplace sync and vendor linkage.
+- `vendorProduct` follows the same schema baseline so vendor-managed catalogs stay aligned with Shopify data (options, media, variants, compare-at pricing, collections).
+- Related models – `sellerProductVariant`, `sellerProductMedia`, `sellerProductOption`, `vendorProductVariant`, `vendorProductMedia`, and their variant media counterparts – keep variant pricing/inventory, option values, and media assets in first-class tables.
+- Shared utilities in `api/utils/productSync.ts` build upsert payloads for these models from Shopify payloads; `api/utils/titleValidation.ts` now provides default titles for seller/vendor products and variants when handles/SKUs are missing.
 Managing Model Schema
 When you work locally with ggt, Gadget converts the visual model editor into metadata files that you can edit directly. These files are typically located in:
 
@@ -269,4 +275,3 @@ Pull the project locally with ggt dev
 Edit .gadget/sync/models/catalogValidation/schema.gadget.ts
 The changes will automatically sync to your development environment
 The CLI gives you full control over your data models while keeping everything in sync with Gadget's cloud environment. This is especially powerful for complex applications like the chat dashboard we're planning to build!
-
