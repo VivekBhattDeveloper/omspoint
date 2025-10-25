@@ -27,7 +27,6 @@ export const schema: GadgetModel = {
     },
     versionNumber: {
       type: "number",
-      decimals: 0,
       validations: { required: true },
       storageKey: "secretVersionNumber",
     },

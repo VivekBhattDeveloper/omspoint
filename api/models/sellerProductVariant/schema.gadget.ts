@@ -16,16 +16,10 @@ export const schema: GadgetModel = {
     },
     barcode: { type: "string", storageKey: "zuAWBj_XC7v-" },
     compareAtPrice: { type: "string", storageKey: "q3pfRSoLWUF8" },
-    inventoryItem: {
-      type: "belongsTo",
-      parent: { model: "shopifyInventoryItem" },
-      storageKey: "sellerProductVariant",
-    },
     inventoryPolicy: { type: "string", storageKey: "YVw3ArQUqY5H" },
     inventoryQuantity: {
       type: "number",
       default: 0,
-      decimals: 0,
       storageKey: "ZtrXiKbCmJIM",
     },
     media: {
@@ -41,7 +35,6 @@ export const schema: GadgetModel = {
     option3: { type: "string", storageKey: "K7R51s4TLKrk" },
     position: {
       type: "number",
-      decimals: 0,
       storageKey: "EfB6aDPHoVwp",
     },
     presentmentPrices: { type: "json", storageKey: "3w7tjmOsbnjh" },
@@ -72,6 +65,10 @@ export const schema: GadgetModel = {
       type: "string",
       validations: { required: true },
       storageKey: "CaN8kQCI5RS8",
+    },
+    weightUnit: {
+      type: "string",
+      storageKey: "sellerProductVariant",
     },
   },
 };

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router";
+import { Provider as GadgetProvider } from "@gadgetinc/react";
 import { AutoForm, AutoInput, AutoSubmit, SubmitResultBanner } from "@/components/auto";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,8 @@ export default function AdminInviteDetail({ loaderData }: Route.ComponentProps) 
   const { invite } = loaderData;
 
   return (
-    <div className="space-y-6">
+    <GadgetProvider api={api}>
+      <div className="space-y-6">
       <PageHeader
         title={invite.email}
         description="Regenerate or edit invitation details before sharing externally."
@@ -60,5 +62,6 @@ export default function AdminInviteDetail({ loaderData }: Route.ComponentProps) 
         </CardContent>
       </Card>
     </div>
+    </GadgetProvider>
   );
 }

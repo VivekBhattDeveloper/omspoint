@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router";
+import { Provider as GadgetProvider } from "@gadgetinc/react";
 import {
   AutoBelongsToInput,
   AutoDateTimePicker,
@@ -42,7 +43,8 @@ export default function VendorPrintJobDetail({ loaderData }: Route.ComponentProp
   });
 
   return (
-    <div className="space-y-6">
+    <GadgetProvider api={api}>
+      <div className="space-y-6">
       <PageHeader
         title={`Print job ${printJob.printJobId}`}
         description="Update production status, requeue jobs, or confirm completion."
@@ -119,5 +121,6 @@ export default function VendorPrintJobDetail({ loaderData }: Route.ComponentProp
         </CardContent>
       </Card>
     </div>
+    </GadgetProvider>
   );
 }

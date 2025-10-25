@@ -3,22 +3,26 @@ Route file: web/routes/_public._index.tsx
 Suggested path: /public
 
 Role/Purpose
-- TODO: Describe the purpose and key user goals for this page.
+- Default public landing hero shown to developers installing the app; points them to the Gadget editor.
 
 Primary UI Components
-- TODO: List components (use web/components/ui/* primitives).
+- Single hero section with headline, description copy, and `Button` linking to Gadget file editor.
+- `Pencil` icon from lucide-react paired with CTA.
 
 Data Dependencies
-- TODO: Models/queries/actions required; note tenant scoping.
+- Purely static content; no loader or API usage.
 
 Actions & Side Effects
-- TODO: Mutations, validations, draft/publish, confirmations.
+- CTA opens `/edit/files/web/routes/_public._index.tsx` in a new tab for rapid editing.
 
 Acceptance Criteria
-- TODO: Bullet criteria to mark this page complete.
+- Page renders centered hero content across viewports.
+- CTA link opens editor in new tab and retains icon + label.
+- No runtime errors when server-side rendering since there are no hooks.
 
 QA & Tests
-- TODO: Happy/unhappy paths; unit tests for logic; E2E if critical.
+- Manual: Load `/public` and ensure hero renders with emoji headline.
+- Manual: Click edit button to verify Gadget editor opens in new tab.
 
 Notes
-- Scaffold generated; refine before development.
+- Replace with real marketing/landing content when app branding is defined.

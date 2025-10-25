@@ -25,8 +25,10 @@ Acceptance Criteria
 - Field errors presented inline and non-blocking navigation protected until save or explicit cancel
 
 QA & Tests
-- TODO (unit: tests/unit/admin-products.test.tsx): update path payload shape; required fields; order association change
-- TODO (e2e: tests/e2e/admin-products.spec.ts): edit product and assert changes reflected in list
+- Manual: Edit product name/price/order linkage and confirm redirect + persisted changes on index.
+- Manual: Trigger validation errors (blank name, negative price) to verify SubmitResultBanner surfaces feedback.
+- Future: Add unit coverage for payload shape/order association changes and E2E smoke for edit flow.
 
 Notes
-- Scaffold generated; refine before development.
+- Currency display currently hardcoded to USD; swap to tenant currency when available.
+- Consider exposing activity log or audit info alongside form in future iteration.

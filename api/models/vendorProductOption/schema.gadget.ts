@@ -14,7 +14,6 @@ export const schema: GadgetModel = {
     },
     position: {
       type: "number",
-      decimals: 0,
       storageKey: "Ywg28NaN1bid",
     },
     product: {

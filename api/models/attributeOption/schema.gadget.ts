@@ -17,7 +17,6 @@ export const schema: GadgetModel = {
     label: { type: "string", storageKey: "attributeOptionLabel" },
     sortOrder: {
       type: "number",
-      decimals: 0,
       storageKey: "attributeOptionSortOrder",
     },
     value: {

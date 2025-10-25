@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useNavigate } from "react-router";
 import { PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,11 +7,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { FileText, Layers, Link2, Paintbrush2, ShieldCheck, Upload } from "lucide-react";
+import { FileText, Link2, Paintbrush2, ShieldCheck, Upload } from "lucide-react";
+import {
+  DesignDiscipline,
+  DesignStatus,
+  disciplineMeta,
+  isDesignDiscipline,
+  isDesignStatus,
+  statusMeta,
+  statusToneClasses,
+} from "./_app.seller.designs/constants";
 import type { Route } from "./+types/_app.seller.designs._index";
 
-type DesignStatus = "draft" | "inReview" | "approved" | "archived";
-type DesignDiscipline = "print" | "embroidery" | "uv" | "sublimation";
 type DatasetSource = "live" | "fallback";
 
 type DesignRecord = {
@@ -23,35 +31,6 @@ type DesignRecord = {
   assignedProductCount: number;
   lastReviewedAt: string | null;
   tags: string[];
-};
-
-const DESIGN_STATUSES: readonly DesignStatus[] = ["draft", "inReview", "approved", "archived"];
-const DESIGN_DISCIPLINES: readonly DesignDiscipline[] = ["print", "embroidery", "uv", "sublimation"];
-
-const isDesignStatus = (value: unknown): value is DesignStatus =>
-  typeof value === "string" && DESIGN_STATUSES.includes(value as DesignStatus);
-const isDesignDiscipline = (value: unknown): value is DesignDiscipline =>
-  typeof value === "string" && DESIGN_DISCIPLINES.includes(value as DesignDiscipline);
-
-const statusMeta: Record<DesignStatus, { label: string; variant: "outline" | "secondary" | "destructive" | "default" }> = {
-  draft: { label: "Draft", variant: "outline" },
-  inReview: { label: "In review", variant: "default" },
-  approved: { label: "Approved", variant: "secondary" },
-  archived: { label: "Archived", variant: "destructive" },
-};
-
-const disciplineMeta: Record<DesignDiscipline, { label: string; icon: typeof Paintbrush2 }> = {
-  print: { label: "Direct print", icon: Paintbrush2 },
-  embroidery: { label: "Embroidery", icon: Layers },
-  uv: { label: "UV print", icon: ShieldCheck },
-  sublimation: { label: "Sublimation", icon: Upload },
-};
-
-const statusToneClasses: Record<(typeof statusMeta)[DesignStatus]["variant"], string> = {
-  outline: "border border-muted-foreground/20 text-muted-foreground",
-  secondary: "bg-emerald-600 text-emerald-50 hover:bg-emerald-500",
-  destructive: "bg-rose-600 text-rose-50 hover:bg-rose-500",
-  default: "",
 };
 
 const randomId = () =>
@@ -142,14 +121,7 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
     const records = await manager.findMany({
       select: {
         id: true,
-        name: true,
-        slug: true,
-        status: true,
-        designType: true,
-        primaryChannel: true,
-        assignedProductCount: true,
-        tags: true,
-        lastReviewedAt: true,
+        _all: true,
       },
       sort: { updatedAt: "Descending" },
       first: 250,
@@ -164,18 +136,36 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
     }
 
     const normalized = records.map((record: any): DesignRecord => {
-      const id = record.id ?? randomId();
+      const id = typeof record.id === "string" && record.id.trim().length > 0 ? record.id : randomId();
+      const raw = (record._all ?? {}) as Record<string, unknown>;
+
+      const name = typeof raw.name === "string" && raw.name.trim().length > 0 ? raw.name : "Untitled design";
+      const slug = typeof raw.slug === "string" && raw.slug.trim().length > 0 ? raw.slug : `design-${id}`;
+      const status = isDesignStatus(raw.status) ? (raw.status as DesignStatus) : "draft";
+      const discipline = isDesignDiscipline(raw.designType) ? (raw.designType as DesignDiscipline) : "print";
+      const primaryChannel =
+        typeof raw.primaryChannel === "string" && raw.primaryChannel.trim()
+          ? (raw.primaryChannel as string)
+          : "—";
+      const assignedProductCount =
+        typeof raw.assignedProductCount === "number"
+          ? (raw.assignedProductCount as number)
+          : Number(raw.assignedProductCount) || 0;
+      const lastReviewedAt = typeof raw.lastReviewedAt === "string" ? (raw.lastReviewedAt as string) : null;
+      const tags = Array.isArray(raw.tags)
+        ? (raw.tags as unknown[]).filter((tag: unknown): tag is string => typeof tag === "string")
+        : [];
 
       return {
         id,
-        name: record.name ?? "Untitled design",
-        slug: record.slug ?? `design-${id}`,
-        status: isDesignStatus(record.status) ? record.status : "draft",
-        discipline: isDesignDiscipline(record.designType) ? record.designType : "print",
-        primaryChannel: record.primaryChannel ?? "—",
-        assignedProductCount: typeof record.assignedProductCount === "number" ? record.assignedProductCount : 0,
-        lastReviewedAt: typeof record.lastReviewedAt === "string" ? record.lastReviewedAt : null,
-        tags: Array.isArray(record.tags) ? record.tags.filter((tag: unknown): tag is string => typeof tag === "string") : [],
+        name,
+        slug,
+        status,
+        discipline,
+        primaryChannel,
+        assignedProductCount,
+        lastReviewedAt,
+        tags,
       };
     });
 
@@ -197,7 +187,11 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
 export default function SellerDesignLibrary({ loaderData }: Route.ComponentProps) {
   const { designs, datasetSource, datasetError } = loaderData;
   const numberFormatter = useMemo(() => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }), []);
-  const dateFormatter = useMemo(() => new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }), []);
+  const dateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeZone: "UTC" }),
+    []
+  );
+  const navigate = useNavigate();
 
   const activeDesigns = designs.filter((design) => design.status !== "archived").length;
   const awaitingApproval = designs.filter((design) => design.status === "inReview").length;
@@ -230,7 +224,7 @@ export default function SellerDesignLibrary({ loaderData }: Route.ComponentProps
         title="Design library"
         description="Organize design assets, monitor brand approvals, and track the listings using each creative."
         actions={
-          <Button>
+          <Button onClick={() => navigate("/seller/designs/new")}>
             <Upload className="mr-2 h-4 w-4" />
             Upload design
           </Button>
@@ -303,7 +297,19 @@ export default function SellerDesignLibrary({ loaderData }: Route.ComponentProps
                 const discipline = disciplineMeta[design.discipline];
 
                 return (
-                  <TableRow key={design.id}>
+                  <TableRow
+                    key={design.id}
+                    className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    onClick={() => navigate(`/seller/designs/${design.id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        navigate(`/seller/designs/${design.id}`);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                  >
                     <TableCell className="pl-6">
                       <div className="flex flex-col">
                         <span className="font-medium">{design.name}</span>

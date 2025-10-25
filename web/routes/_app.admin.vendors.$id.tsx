@@ -1,8 +1,7 @@
 import type { Route } from "./+types/_app.admin.vendors.$id";
-import { Link, useNavigate } from "react-router";
 import { useState } from "react";
-import { useAction } from "@gadgetinc/react";
-import { AutoForm, AutoInput, AutoSubmit, SubmitResultBanner } from "@/components/auto";
+import type { ChangeEvent, FormEvent } from "react";
+import { Link, useNavigate } from "react-router";
 import { api } from "../api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,13 +16,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Trash2, Plus, Edit, Phone, Mail } from "lucide-react";
 
 export const loader = async ({ context, params }: Route.LoaderArgs) => {
   const vendorId = params.id;
-  
-  // Fetch the vendor and its associated sellers
+
   const vendor = await context.api.vendor.findOne(vendorId, {
     select: {
       id: true,
@@ -41,11 +42,11 @@ export const loader = async ({ context, params }: Route.LoaderArgs) => {
             id: true,
             name: true,
             email: true,
-            phoneNumber: true
-          }
-        }
-      }
-    }
+            phoneNumber: true,
+          },
+        },
+      },
+    },
   });
 
   return { vendor };
@@ -55,37 +56,75 @@ export default function VendorDetail({ loaderData }: Route.ComponentProps) {
   const { vendor } = loaderData;
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
-  const [{ fetching: deleting, error: deleteError }, deleteVendor] = useAction(api.vendor.delete);
-  const [{ fetching: deletingSeller, error: deleteSellerError }, deleteSeller] = useAction(api.seller.delete);
+  const [formValues, setFormValues] = useState({
+    name: vendor.name ?? "",
+    email: vendor.email ?? "",
+    phoneNumber: vendor.phoneNumber ?? "",
+    address: vendor.address ?? "",
+    city: vendor.city ?? "",
+    state: vendor.state ?? "",
+    zip: vendor.zip ?? "",
+    country: vendor.country ?? "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeletingVendor, setIsDeletingVendor] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [sellerError, setSellerError] = useState<string | null>(null);
 
-  const handleCancel = () => {
-    navigate("/admin/vendors");
-  };
+  const handleChange =
+    (field: keyof typeof formValues) =>
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setFormValues((current) => ({ ...current, [field]: event.target.value }));
+    };
 
-  const handleSuccess = () => {
-    toast.success("Vendor updated successfully!");
-    navigate("/admin/vendors");
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setFormError(null);
+
+    try {
+      await api.vendor.update(vendor.id, { ...formValues });
+      toast.success("Vendor updated successfully!");
+    } catch (error) {
+      console.error("Failed to update vendor", error);
+      setFormError(
+        error instanceof Error ? error.message : "Unable to update vendor. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeleteVendor = async () => {
+    setIsDeletingVendor(true);
+    setFormError(null);
     try {
-      await deleteVendor({ id: vendor.id });
+      await api.vendor.delete(vendor.id);
       toast.success("Vendor deleted successfully!");
       navigate("/admin/vendors");
     } catch (error) {
+      console.error("Failed to delete vendor", error);
+      setFormError(
+        error instanceof Error ? error.message : "Failed to delete vendor. Please try again."
+      );
       toast.error("Failed to delete vendor. Please try again.");
+    } finally {
+      setIsDeletingVendor(false);
+      setIsDeleteDialogOpen(false);
     }
-    setIsDeleteDialogOpen(false);
   };
 
   const handleDeleteSeller = async (sellerId: string) => {
+    setSellerError(null);
     try {
-      await deleteSeller({ id: sellerId });
+      await api.seller.delete(sellerId);
       toast.success("Seller deleted successfully!");
-      // Refresh the page to update the sellers list
       window.location.reload();
     } catch (error) {
+      console.error("Failed to delete seller", error);
+      setSellerError(
+        error instanceof Error ? error.message : "Failed to delete seller. Please try again."
+      );
       toast.error("Failed to delete seller. Please try again.");
     }
   };
@@ -96,7 +135,6 @@ export default function VendorDetail({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="container mx-auto py-8 space-y-6">
-      {/* Breadcrumb Navigation */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
         <Link to="/admin/vendors" className="hover:text-foreground">
           Vendors
@@ -105,7 +143,6 @@ export default function VendorDetail({ loaderData }: Route.ComponentProps) {
         <span className="text-foreground font-medium">{vendor.name}</span>
       </nav>
 
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Edit Vendor</h1>
@@ -117,9 +154,9 @@ export default function VendorDetail({ loaderData }: Route.ComponentProps) {
           </Button>
           <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" disabled={deleting}>
+              <Button variant="destructive" disabled={isDeletingVendor}>
                 <Trash2 className="w-4 h-4 mr-2" />
-                {deleting ? "Deleting..." : "Delete Vendor"}
+                {isDeletingVendor ? "Deleting..." : "Delete Vendor"}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -143,62 +180,89 @@ export default function VendorDetail({ loaderData }: Route.ComponentProps) {
         </div>
       </div>
 
-      {/* Error Display */}
-      {deleteError && (
-        <div className="bg-destructive/15 text-destructive px-4 py-2 rounded-md">
-          Error deleting vendor: {deleteError.toString()}
-        </div>
+      {formError && (
+        <Alert variant="destructive">
+          <AlertTitle>Action failed</AlertTitle>
+          <AlertDescription>{formError}</AlertDescription>
+        </Alert>
       )}
-      {deleteSellerError && (
-        <div className="bg-destructive/15 text-destructive px-4 py-2 rounded-md">
-          Error deleting seller: {deleteSellerError.toString()}
-        </div>
+      {sellerError && (
+        <Alert variant="destructive">
+          <AlertTitle>Seller action failed</AlertTitle>
+          <AlertDescription>{sellerError}</AlertDescription>
+        </Alert>
       )}
 
-      {/* Vendor Edit Form */}
       <Card>
         <CardHeader>
           <CardTitle>Vendor Information</CardTitle>
         </CardHeader>
         <CardContent>
-          <AutoForm 
-            action={api.vendor.update}
-            findBy={vendor.id}
-            onSuccess={handleSuccess}
-          >
-            <SubmitResultBanner />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <AutoInput field="name" />
-              <AutoInput field="email" />
-              <AutoInput field="phoneNumber" />
-              <AutoInput field="address" />
-              <AutoInput field="city" />
-              <AutoInput field="state" />
-              <AutoInput field="zip" />
-              <AutoInput field="country" />
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input id="name" value={formValues.name} onChange={handleChange("name")} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formValues.email}
+                  onChange={handleChange("email")}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phoneNumber">Phone number</Label>
+                <Input
+                  id="phoneNumber"
+                  value={formValues.phoneNumber}
+                  onChange={handleChange("phoneNumber")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <Input id="address" value={formValues.address} onChange={handleChange("address")} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input id="city" value={formValues.city} onChange={handleChange("city")} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="state">State / Province</Label>
+                <Input id="state" value={formValues.state} onChange={handleChange("state")} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="zip">Postal code</Label>
+                <Input id="zip" value={formValues.zip} onChange={handleChange("zip")} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="country">Country</Label>
+                <Input id="country" value={formValues.country} onChange={handleChange("country")} />
+              </div>
             </div>
-            
+
             <div className="flex space-x-4">
-              <AutoSubmit />
-              <Button type="button" variant="outline" onClick={handleCancel}>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving…" : "Save changes"}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => navigate("/admin/vendors")}>
                 Cancel
               </Button>
             </div>
-          </AutoForm>
+          </form>
         </CardContent>
       </Card>
 
-      {/* Associated Sellers */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Associated Sellers ({vendor.sellers.edges.length})</CardTitle>
           <div className="flex items-center space-x-2">
             {vendor.sellers.edges.length > 0 && (
               <Button variant="outline" size="sm" asChild>
-            <Link to={`/admin/vendors/${vendor.id}/sellers`}>
-                  View All Sellers
-                </Link>
+                <Link to={`/admin/vendors/${vendor.id}/sellers`}>View All Sellers</Link>
               </Button>
             )}
             <Button onClick={handleAddSeller} size="sm">
@@ -211,7 +275,10 @@ export default function VendorDetail({ loaderData }: Route.ComponentProps) {
           {vendor.sellers.edges.length > 0 ? (
             <div className="space-y-4">
               {vendor.sellers.edges.map(({ node: seller }) => (
-                <div key={seller.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow">
+                <div
+                  key={seller.id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow"
+                >
                   <div className="flex-1">
                     <div className="flex items-center gap-4">
                       <div>
@@ -238,16 +305,15 @@ export default function VendorDetail({ loaderData }: Route.ComponentProps) {
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" disabled={deletingSeller}>
-                          <Trash2 className="w-4 h-4 mr-1" />
+                        <Button variant="destructive" size="sm">
                           Delete
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Seller</AlertDialogTitle>
+                          <AlertDialogTitle>Remove seller</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to delete "{seller.name}"? This action cannot be undone.
+                            Are you sure you want to remove "{seller.name}" from this vendor? This action cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -256,7 +322,7 @@ export default function VendorDetail({ loaderData }: Route.ComponentProps) {
                             onClick={() => handleDeleteSeller(seller.id)}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
-                            Delete Seller
+                            Delete seller
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -266,13 +332,7 @@ export default function VendorDetail({ loaderData }: Route.ComponentProps) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">No sellers associated with this vendor yet.</p>
-              <Button onClick={handleAddSeller} variant="outline">
-                <Plus className="w-4 h-4 mr-2" />
-                Add First Seller
-              </Button>
-            </div>
+            <p className="text-sm text-muted-foreground">No sellers associated with this vendor yet.</p>
           )}
         </CardContent>
       </Card>

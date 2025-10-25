@@ -1,44 +1,38 @@
 Title: _app.vendor.products._index page
-
 Route file: web/routes/_app.vendor.products._index.tsx
+Suggested path: /vendor/products
 
-Suggested path: /app/vendor/products
+Role/Purpose
+- Vendor-facing catalog dashboard summarizing product readiness, variant coverage, and asset counts.
+- Entry point for creating or editing vendor-managed products while providing resilience when the API fails.
 
-Role/Purpose:
+Primary UI Components
+- `PageHeader` with dynamic description and `New product` CTA.
+- Three KPI `Card`s: total products (status breakdown), variant coverage (avg + %), and media assets.
+- Optional `Alert` banner when loader falls back to sample dataset.
+- `Card`-wrapped `Table` showing title/handle/vendor, status badge, variant/media counts, updated timestamp, and inline edit button.
 
-* Give vendors a snapshot of production readiness across their catalog (totals, status mix, variants, media).
-* Provide navigation to create new products and drill into existing records for editing.
+Data Dependencies
+- Loader queries `context.api.vendorProduct.findMany` (first 250) selecting id/title/handle/status/updatedAt plus vendor, variant, and media edges.
+- Computes stats (`total`, status counts, `totalVariants`, `averageVariants`, `productsWithVariants`, `variantCoverage`, `totalMedia`) and sets `isSample` on failure with curated fallback data.
 
-Primary UI Components:
+Actions & Side Effects
+- Row click and Edit button navigate to `/vendor/products/:id`; CTA routes to `/vendor/products/new`.
+- Alert displays when `isSample` true, including surfaced `errorMessage`.
+- Badge variant helper maps status to consistent styling.
 
-* PageHeader with title/description copy and New product button.
-* Three KPI Cards summarizing total products, variant coverage, and media attachments.
-* AutoTable over api.vendorProduct with columns for title/handle, status badge, variant/media counts, updated timestamp, and inline edit action.
+Acceptance Criteria
+- Loader handles success and failure (sample fallback) while keeping KPI math aligned with shown table rows.
+- Table rows remain keyboard accessible and stop event propagation for inline edit button.
+- Zero-state messaging appears when no products exist.
+- Description text adapts when totals are zero to coach the vendor to create first item.
 
-Data Dependencies:
+QA & Tests
+- Manual: Force loader failure to validate alert and fallback data.
+- Manual: Confirm stats match table numbers and navigation works (row click/edit/new).
+- Manual: Validate sample dataset still renders accessible table structure.
+- Unit: Cover `computeStats` helper to ensure averages/percentages correct.
 
-* Loader hits context.api.vendorProduct.findMany (first 250) selecting id, title, handle, status, updatedAt, nested variants/media ids, and vendor metadata.
-* Derived stats: totals, status counts, variant/media sums, and average variants per product (guarded when list empty).
-
-Actions & Side Effects:
-
-* New product button pushes to /vendor/products/new.
-* Each row renders a ghost Edit button that routes to /vendor/products/:id.
-* No inline mutations; table relies on Gadget auto components for fetching/pagination.
-
-Acceptance Criteria:
-
-* KPI cards accurately reflect loader-derived metrics (total, status mix, variants, media).
-* Table renders expected columns with friendly fallbacks for missing title/handle and formats numbers/dates.
-* Navigating via New product or row Edit routes to the correct create/detail screens.
-
-QA & Tests:
-
-* Unit: verify loader stats calculations with mocked vendorProduct datasets (status tallies, average variants).
-* UI/E2E: ensure table loads vendor products, Edit routes to detail, New product opens creation flow.
-* Accessibility: header actions keyboard-focusable; badges/buttons convey status without relying solely on color.
-
-Notes:
-
-* Adjust loader limit or sorting if catalog growth requires pagination strategy beyond first: 250.
-* Ensure vendor-level access control keeps results scoped to the signed-in vendor.
+Notes
+- Consider adding filters (status/vendor) and pagination when catalog grows beyond 250 entries.
+- Keep status badge variants in sync with seller catalog to avoid divergent semantics.

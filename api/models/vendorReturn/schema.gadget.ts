@@ -66,7 +66,6 @@ export const schema: GadgetModel = {
     },
     quantity: {
       type: "number",
-      decimals: 0,
       validations: { required: true },
       storageKey: "PQtL_gD4nCsI",
     },
@@ -116,7 +115,6 @@ export const schema: GadgetModel = {
     },
     value: {
       type: "number",
-      decimals: 2,
       validations: { required: true },
       storageKey: "66tWnEkjF0YF",
     },

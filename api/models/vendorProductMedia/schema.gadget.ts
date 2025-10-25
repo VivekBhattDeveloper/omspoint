@@ -7,20 +7,14 @@ export const schema: GadgetModel = {
   type: "gadget/model-schema/v1",
   storageKey: "iO9FhgfvpixV",
   fields: {
+    alt: { type: "string", storageKey: "vendorProductMedia::alt" },
     featuredMediaForProduct: {
       type: "belongsTo",
       parent: { model: "vendorProduct" },
       storageKey: "m1A1uvg6QcGA",
     },
-    file: {
-      type: "belongsTo",
-      validations: { required: true },
-      parent: { model: "shopifyFile" },
-      storageKey: "vendorProductMedia::file",
-    },
     position: {
       type: "number",
-      decimals: 0,
       validations: { required: true },
       storageKey: "ZxmxfXCUYwe0",
     },

@@ -29,7 +29,6 @@ export const schema: GadgetModel = {
     method: { type: "string", storageKey: "payoutScheduleMethod" },
     offsetDays: {
       type: "number",
-      decimals: 0,
       storageKey: "payoutScheduleOffsetDays",
     },
     status: {

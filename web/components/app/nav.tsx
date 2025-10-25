@@ -23,8 +23,8 @@
 import type { ExoticComponent, ReactNode } from "react";
 import { Fragment, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import { useSignOut } from "@gadgetinc/react";
 import { NavDrawer } from "@/components/shared/NavDrawer";
+import { api } from "@/api";
 import {
   Home,
   User,
@@ -251,6 +251,45 @@ const secondaryNavigationItems: NavItem[] = [
 export const Navigation = ({ user, activeOrgId, onLinkClick }: { user?: any; activeOrgId?: "hq" | "print" | "marketplace"; onLinkClick?: () => void }) => {
   const location = useLocation();
   const visible = getVisibleSectionTitles(user, activeOrgId);
+  const visibleSections = navigationSections.filter((section) => visible.has(section.title));
+  const normalizedPathname = location.pathname.replace(/\/+$/, "") || "/";
+
+  const matchesPath = (pathname: string, target: string) => {
+    const normalizedTarget = target.replace(/\/+$/, "") || "/";
+    if (pathname === normalizedTarget) {
+      return { matches: true, exact: true };
+    }
+
+    if (pathname.startsWith(normalizedTarget) && pathname.length > normalizedTarget.length && pathname[normalizedTarget.length] === "/") {
+      return { matches: true, exact: false };
+    }
+
+    return { matches: false, exact: false };
+  };
+
+  const activeItemPath = visibleSections
+    .flatMap((section) => section.items)
+    .reduce<string | undefined>((bestMatch, item) => {
+      const { matches, exact } = matchesPath(normalizedPathname, item.path);
+      if (!matches) {
+        return bestMatch;
+      }
+
+      if (!bestMatch) {
+        return item.path;
+      }
+
+      const currentBestExact = matchesPath(normalizedPathname, bestMatch).exact;
+      if (exact && !currentBestExact) {
+        return item.path;
+      }
+
+      if (exact === currentBestExact && item.path.length > bestMatch.length) {
+        return item.path;
+      }
+
+      return bestMatch;
+    }, undefined);
 
   return (
     <>
@@ -260,8 +299,7 @@ export const Navigation = ({ user, activeOrgId, onLinkClick }: { user?: any; act
         </Link>
       </div>
       <nav className="flex-1 px-4 py-4 space-y-4 overflow-y-auto">
-        {navigationSections
-          .filter((section) => visible.has(section.title))
+        {visibleSections
           .map((section) => (
             <Fragment key={section.title}>
               <p className="px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wide">
@@ -269,7 +307,7 @@ export const Navigation = ({ user, activeOrgId, onLinkClick }: { user?: any; act
               </p>
               <div className="space-y-1">
                 {section.items.map((item) => {
-                  const isActive = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+                  const isActive = item.path === activeItemPath;
                   return (
                     <Link
                       key={item.path}
@@ -301,7 +339,7 @@ export const Navigation = ({ user, activeOrgId, onLinkClick }: { user?: any; act
  * @param icon - The icon to display as the dropdown trigger (usually a user avatar or icon).
  */
 
-export const SecondaryNavigation = ({ icon }: { icon: ReactNode }) => {
+export const SecondaryNavigation = ({ icon, userId }: { icon: ReactNode; userId?: string }) => {
   const [userMenuActive, setUserMenuActive] = useState(false);
 
   return (
@@ -325,28 +363,30 @@ export const SecondaryNavigation = ({ icon }: { icon: ReactNode }) => {
               </Link>
             </DropdownMenuItem>
           ))}
-          <SignOutOption />
+          <SignOutOption userId={userId} />
         </>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
 
-const SignOutOption = () => {
-  const signOut = useSignOut({ redirectToPath: "/" });
+const SignOutOption = ({ userId }: { userId?: string }) => {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
-      await signOut();
-    } catch (error: any) {
-      // If the user is not properly signed in, redirect to home page
-      if (error?.message?.includes('not signed in') || error?.message?.includes('unauthorized')) {
-        navigate("/");
+      if (userId) {
+        await api.user.signOut(userId);
       } else {
-        // Log other errors to console
-        console.error("Sign out error:", error);
+        const response = await fetch("/sign-out", { method: "POST", credentials: "include" });
+        if (!response.ok && response.status !== 401) {
+          throw new Error(`Sign-out request failed with status ${response.status}`);
+        }
       }
+    } catch (error: any) {
+      console.error("Sign out error:", error);
+    } finally {
+      navigate("/");
     }
   };
 

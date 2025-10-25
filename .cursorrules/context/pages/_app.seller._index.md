@@ -3,22 +3,26 @@ Route file: web/routes/_app.seller._index.tsx
 Suggested path: /app/seller
 
 Role/Purpose
-- TODO: Describe the purpose and key user goals for this page.
+- Seller landing page summarizing key health metrics (sales, fulfillment, settlement) and orienting users toward deeper views.
 
 Primary UI Components
-- TODO: List components (use web/components/ui/* primitives).
+- `PageHeader` with descriptive subtitle.
+- Grid of three summary `Card`s displaying placeholder KPI values.
 
 Data Dependencies
-- TODO: Models/queries/actions required; note tenant scoping.
+- Static placeholders only; no loader or API calls yet.
 
 Actions & Side Effects
-- TODO: Mutations, validations, draft/publish, confirmations.
+- No interactive actions; cards are read-only today.
 
 Acceptance Criteria
-- TODO: Bullet criteria to mark this page complete.
+- Page renders header and KPI grid across breakpoints (stacking on mobile).
+- Placeholder values display em dash until real data wired.
+- Typography and spacing match design system guidance.
 
 QA & Tests
-- TODO: Happy/unhappy paths; unit tests for logic; E2E if critical.
+- Manual: Smoke-test `/seller` layout responsiveness.
+- Visual regression once live metrics land to guard layout changes.
 
 Notes
-- Scaffold generated; refine before development.
+- Replace placeholders with analytics service once available; keep summary limited to <6 cards.

@@ -84,7 +84,6 @@ export const schema: GadgetModel = {
     version: {
       type: "number",
       default: 1,
-      decimals: 0,
       storageKey: "catalogAttributeVersion",
     },
   },

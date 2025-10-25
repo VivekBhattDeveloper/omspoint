@@ -1,17 +1,20 @@
+import { useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router";
-import {
-  AutoBelongsToInput,
-  AutoDateTimePicker,
-  AutoEnumInput,
-  AutoForm,
-  AutoInput,
-  AutoSubmit,
-  SubmitResultBanner,
-} from "@/components/auto";
 import { PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { api } from "../api";
 import type { Route } from "./+types/_app.admin.finance.reconciliation.$id";
@@ -41,14 +44,80 @@ export const loader = async ({ context, params }: Route.LoaderArgs) => {
     },
   });
 
-  return { reconciliation };
+  let orders: { id: string; orderId: string | null; status: string | null }[] = [];
+  try {
+    orders = await context.api.order.findMany({
+      first: 25,
+      sort: { createdAt: "Descending" },
+      select: {
+        id: true,
+        orderId: true,
+        status: true,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to load orders for reconciliation editor", error);
+  }
+
+  return { reconciliation, orders };
 };
 
 export default function AdminFinanceReconciliationDetail({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
-  const { reconciliation } = loaderData;
+  const { reconciliation, orders } = loaderData;
   const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
   const statusKey = reconciliation.status ? reconciliation.status.toLowerCase() : "";
+  const [formValues, setFormValues] = useState({
+    reconciliationId: reconciliation.reconciliationId ?? "",
+    status: reconciliation.status ?? "pending",
+    reconciliationDate: reconciliation.reconciliationDate
+      ? new Date(new Date(reconciliation.reconciliationDate).getTime() - new Date().getTimezoneOffset() * 60000)
+          .toISOString()
+          .slice(0, 16)
+      : "",
+    orderId: reconciliation.order?.id ?? "none",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleChange =
+    (field: "reconciliationId" | "reconciliationDate") =>
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setFormValues((current) => ({ ...current, [field]: event.target.value }));
+    };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const reconciliationDate = formValues.reconciliationDate
+        ? new Date(formValues.reconciliationDate)
+        : undefined;
+
+      await api.financeReconciliation.update(reconciliation.id, {
+        reconciliationId: formValues.reconciliationId,
+        status: formValues.status as "pending" | "complete" | "failed",
+        reconciliationDate: reconciliationDate ? reconciliationDate.toISOString() : null,
+        order: formValues.orderId && formValues.orderId !== "none" ? { _link: formValues.orderId } : null,
+      });
+
+      navigate("/admin/finance/reconciliation");
+    } catch (err) {
+      console.error("Failed to update reconciliation", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to update the reconciliation. Please review the fields and try again."
+      );
+      setIsSubmitting(false);
+    }
+  };
+
+  const selectedOrder = formValues.orderId && formValues.orderId !== "none"
+    ? orders.find((order) => order.id === formValues.orderId)
+    : undefined;
 
   return (
     <div className="space-y-6">
@@ -169,25 +238,87 @@ export default function AdminFinanceReconciliationDetail({ loaderData }: Route.C
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AutoForm
-            action={api.financeReconciliation.update}
-            findBy={reconciliation.id}
-            onSuccess={() => navigate("/admin/finance/reconciliation")}
-          >
-            <SubmitResultBanner />
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="grid gap-4 md:grid-cols-2">
-              <AutoInput field="reconciliationId" />
-              <AutoEnumInput field="status" />
-              <AutoDateTimePicker field="reconciliationDate" />
-              <AutoBelongsToInput field="order" />
+              <div className="space-y-2">
+                <Label htmlFor="reconciliationId">Reconciliation ID</Label>
+                <Input
+                  id="reconciliationId"
+                  value={formValues.reconciliationId}
+                  onChange={handleChange("reconciliationId")}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={formValues.status}
+                  onValueChange={(value) => setFormValues((current) => ({ ...current, status: value }))}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="complete">Complete</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reconciliationDate">Reconciliation date</Label>
+                <Input
+                  id="reconciliationDate"
+                  type="datetime-local"
+                  value={formValues.reconciliationDate}
+                  onChange={handleChange("reconciliationDate")}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="orderId">Linked order</Label>
+                <Select
+                  value={formValues.orderId}
+                  onValueChange={(value) => setFormValues((current) => ({ ...current, orderId: value }))}
+                >
+                  <SelectTrigger id="orderId">
+                    <SelectValue placeholder="Select order" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No order</SelectItem>
+                    {orders.map((order) => (
+                      <SelectItem key={order.id} value={order.id}>
+                        {(order.orderId ?? order.id) + (order.status ? ` • ${order.status}` : "")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedOrder ? (
+                  <p className="text-xs text-muted-foreground">
+                    Currently linked to {(selectedOrder.orderId ?? selectedOrder.id)} ({selectedOrder.status ?? "unknown"}).
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Not linked to an order.</p>
+                )}
+              </div>
             </div>
+
+            {error ? (
+              <Alert variant="destructive">
+                <AlertTitle>Failed to update reconciliation</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            ) : null}
+
             <div className="flex items-center gap-2 pt-6">
-              <AutoSubmit>Save changes</AutoSubmit>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving…" : "Save changes"}
+              </Button>
               <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                 Cancel
               </Button>
             </div>
-          </AutoForm>
+          </form>
         </CardContent>
       </Card>
     </div>

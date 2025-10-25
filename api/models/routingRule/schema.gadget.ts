@@ -16,7 +16,6 @@ export const schema: GadgetModel = {
     name: { type: "string", storageKey: "routingRuleName" },
     priority: {
       type: "number",
-      decimals: 0,
       validations: { required: true },
       storageKey: "routingRulePriority",
     },

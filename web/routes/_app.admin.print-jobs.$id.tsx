@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
+import { Provider as GadgetProvider } from "@gadgetinc/react";
 import {
   AutoBelongsToInput,
   AutoDateTimePicker,
@@ -61,7 +62,8 @@ export default function AdminPrintJobDetail({ loaderData }: Route.ComponentProps
   const currency = useMemo(() => new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }), []);
 
   return (
-    <div className="space-y-6">
+    <GadgetProvider api={api}>
+      <div className="space-y-6">
       <PageHeader
         title={`Print job ${printJob.printJobId}`}
         description={
@@ -169,5 +171,6 @@ export default function AdminPrintJobDetail({ loaderData }: Route.ComponentProps
         </CardContent>
       </Card>
     </div>
+    </GadgetProvider>
   );
 }

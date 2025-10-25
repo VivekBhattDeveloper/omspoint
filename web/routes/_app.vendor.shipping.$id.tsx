@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router";
+import { Provider as GadgetProvider } from "@gadgetinc/react";
 import {
   AutoBelongsToInput,
   AutoDateTimePicker,
@@ -35,7 +36,8 @@ export default function VendorShipmentDetail({ loaderData }: Route.ComponentProp
   const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 
   return (
-    <div className="space-y-6">
+    <GadgetProvider api={api}>
+      <div className="space-y-6">
       <PageHeader
         title={`Shipment ${shipment.trackingNumber}`}
         description="Adjust carrier data, resend labels, or trigger reprints."
@@ -118,5 +120,6 @@ export default function VendorShipmentDetail({ loaderData }: Route.ComponentProp
         </CardContent>
       </Card>
     </div>
+    </GadgetProvider>
   );
 }

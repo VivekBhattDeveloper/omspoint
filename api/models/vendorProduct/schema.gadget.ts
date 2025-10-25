@@ -17,6 +17,17 @@ export const schema: GadgetModel = {
       validations: { required: true, unique: true },
       storageKey: "cXkDnmuuBG9z",
     },
+    designGuidelines: { type: "richText", storageKey: "vendorProduct::designGuidelines" },
+    mockupAssets: { type: "json", storageKey: "vendorProduct::mockupAssets" },
+    mockupConfig: { type: "json", storageKey: "vendorProduct::mockupConfig" },
+    mockupStatus: {
+      type: "enum",
+      options: ["not_started", "in_progress", "ready", "deprecated"],
+      default: "not_started",
+      acceptMultipleSelections: false,
+      acceptUnlistedOptions: false,
+      storageKey: "vendorProduct::mockupStatus",
+    },
     media: {
       type: "hasMany",
       children: {
@@ -34,6 +45,8 @@ export const schema: GadgetModel = {
       storageKey: "wRvs2XtkZo0i",
     },
     orderLineItems: { type: "json", storageKey: "JUIpfrCOaNrP" },
+    printAreas: { type: "json", storageKey: "vendorProduct::printAreas" },
+    productionNotes: { type: "richText", storageKey: "vendorProduct::productionNotes" },
     productType: { type: "string", storageKey: "U29Yi01cJjoa" },
     publishedAt: {
       type: "dateTime",

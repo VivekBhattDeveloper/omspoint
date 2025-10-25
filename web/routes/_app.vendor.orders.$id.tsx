@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { StatusBadge } from "@/components/app/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Provider as GadgetProvider } from "@gadgetinc/react";
 import { api } from "../api";
 import type { Route } from "./+types/_app.vendor.orders.$id";
 
@@ -41,7 +42,8 @@ export default function VendorOrderDetail({ loaderData }: Route.ComponentProps) 
   const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 
   return (
-    <div className="space-y-6">
+    <GadgetProvider api={api}>
+      <div className="space-y-6">
       <PageHeader
         title={`Order ${order.orderId}`}
         description="Update status, confirm totals, and align seller expectations."
@@ -129,6 +131,7 @@ export default function VendorOrderDetail({ loaderData }: Route.ComponentProps) 
         </CardContent>
       </Card>
     </div>
+    </GadgetProvider>
   );
 }
 

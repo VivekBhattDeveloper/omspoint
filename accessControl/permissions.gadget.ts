@@ -1206,14 +1206,1803 @@ export const permissions: GadgetPermissions = {
     },
     Vendor: {
       storageKey: "3tijEwgZxlUR",
+      default: {
+        read: true,
+        action: true,
+      },
       models: {
-        vendorProduct: {
+        alert: {
           read: true,
         },
+        approvalRequest: {
+          read: true,
+        },
+        attributeOption: {
+          read: true,
+        },
+        auditEvent: {
+          read: true,
+        },
+        calibrationRun: {
+          read: true,
+        },
+        catalogAttribute: {
+          read: true,
+        },
+        catalogValidation: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        complianceExport: {
+          read: true,
+        },
+        controlCheckpoint: {
+          read: true,
+        },
+        courierFeedback: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        design: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        featureFlag: {
+          read: true,
+        },
+        feeRule: {
+          read: true,
+        },
+        financeConfig: {
+          read: true,
+        },
+        financeReconciliation: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        fulfillmentAction: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        incident: {
+          read: true,
+        },
+        integration: {
+          read: true,
+        },
+        integrationCredential: {
+          read: true,
+        },
+        integrationState: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        invite: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            resend: true,
+          },
+        },
+        jigTemplate: {
+          read: true,
+        },
+        logForwarder: {
+          read: true,
+        },
+        membership: {
+          read: true,
+        },
+        order: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        organization: {
+          read: true,
+        },
+        payment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        payoutSchedule: {
+          read: true,
+        },
+        printerDevice: {
+          read: true,
+        },
+        printJob: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        printProfile: {
+          read: true,
+        },
+        product: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        reportDefinition: {
+          read: true,
+        },
+        reportRun: {
+          read: true,
+        },
+        routingPolicy: {
+          read: true,
+        },
+        routingPolicyAudit: {
+          read: true,
+        },
+        routingPolicyVendor: {
+          read: true,
+        },
+        routingRule: {
+          read: true,
+        },
+        routingSimulation: {
+          read: true,
+        },
+        scheduledReport: {
+          read: true,
+        },
+        schemaChange: {
+          read: true,
+        },
+        secret: {
+          read: true,
+        },
+        secretVersion: {
+          read: true,
+        },
+        seller: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProduct: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductOption: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductVariant: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductVariantMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        serviceMetric: {
+          read: true,
+        },
+        session: {
+          read: true,
+        },
+        shipment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyApp: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppCredit: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppInstallation: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppPurchaseOneTime: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppSubscription: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppUsageRecord: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyArticle: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyBillingAddress: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyBlog: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyBulkOperation: {
+          read: true,
+          actions: {
+            cancel: true,
+            complete: true,
+            create: true,
+            expire: true,
+            fail: true,
+            update: true,
+          },
+        },
+        shopifyCarrierService: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCatalog: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckout: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckoutAppliedGiftCard: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckoutLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckoutShippingRate: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCollect: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCollection: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyComment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCustomer: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCustomerAddress: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyDeliveryMethod: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyExchangeLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFile: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentEvent: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentHold: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentOrder: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentOrderDestination: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentOrderLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentOrderMerchantRequest: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentService: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyGdprRequest: {
+          read: true,
+          actions: {
+            create: true,
+            update: true,
+          },
+        },
+        shopifyInventoryItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyInventoryLevel: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyInventoryQuantity: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyLocation: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyOrder: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyOrderAdjustment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyOrderLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyOrderTransaction: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyPage: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyPriceList: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyPriceListPrice: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProduct: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProductMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProductOption: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProductVariant: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProductVariantMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyQuantityPriceBreak: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyRedirect: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyRefund: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyRefundDuty: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyRefundLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReturn: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReturnLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReturnShippingFee: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseDelivery: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseDeliveryLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseFulfillmentOrder: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseFulfillmentOrderDisposition: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseFulfillmentOrderLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyScriptTag: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyShippingAddress: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyShippingLine: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyShop: {
+          read: true,
+          actions: {
+            install: true,
+            reinstall: true,
+            uninstall: true,
+            update: true,
+          },
+        },
+        shopifySync: {
+          read: true,
+          actions: {
+            abort: true,
+            complete: true,
+            error: true,
+            run: true,
+          },
+        },
+        shopifyTenderTransaction: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        slaTarget: {
+          read: true,
+        },
+        taxRule: {
+          read: true,
+        },
+        tenantRole: {
+          read: true,
+        },
+        user: {
+          read: true,
+          actions: {
+            changePassword: true,
+            delete: true,
+            resetPassword: true,
+            sendResetPassword: true,
+            sendVerifyEmail: true,
+            signIn: true,
+            signOut: true,
+            signUp: true,
+            update: true,
+            verifyEmail: true,
+          },
+        },
+        vendor: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProduct: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductOption: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductVariant: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductVariantMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorReturn: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        webhookEndpoint: {
+          read: true,
+        },
+        workspace: {
+          read: true,
+        },
+      },
+      actions: {
+        scheduledShopifySync: true,
       },
     },
     Seller: {
       storageKey: "_eSe2T5A-5od",
+      default: {
+        read: true,
+        action: true,
+      },
+      models: {
+        alert: {
+          read: true,
+        },
+        approvalRequest: {
+          read: true,
+        },
+        attributeOption: {
+          read: true,
+        },
+        auditEvent: {
+          read: true,
+        },
+        calibrationRun: {
+          read: true,
+        },
+        catalogAttribute: {
+          read: true,
+        },
+        catalogValidation: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        complianceExport: {
+          read: true,
+        },
+        controlCheckpoint: {
+          read: true,
+        },
+        courierFeedback: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        design: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        featureFlag: {
+          read: true,
+        },
+        feeRule: {
+          read: true,
+        },
+        financeConfig: {
+          read: true,
+        },
+        financeReconciliation: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        fulfillmentAction: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        incident: {
+          read: true,
+        },
+        integration: {
+          read: true,
+        },
+        integrationCredential: {
+          read: true,
+        },
+        integrationState: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        invite: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            resend: true,
+          },
+        },
+        jigTemplate: {
+          read: true,
+        },
+        logForwarder: {
+          read: true,
+        },
+        membership: {
+          read: true,
+        },
+        order: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        organization: {
+          read: true,
+        },
+        payment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        payoutSchedule: {
+          read: true,
+        },
+        printerDevice: {
+          read: true,
+        },
+        printJob: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        printProfile: {
+          read: true,
+        },
+        product: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        reportDefinition: {
+          read: true,
+        },
+        reportRun: {
+          read: true,
+        },
+        routingPolicy: {
+          read: true,
+        },
+        routingPolicyAudit: {
+          read: true,
+        },
+        routingPolicyVendor: {
+          read: true,
+        },
+        routingRule: {
+          read: true,
+        },
+        routingSimulation: {
+          read: true,
+        },
+        scheduledReport: {
+          read: true,
+        },
+        schemaChange: {
+          read: true,
+        },
+        secret: {
+          read: true,
+        },
+        secretVersion: {
+          read: true,
+        },
+        seller: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProduct: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductOption: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductVariant: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        sellerProductVariantMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        serviceMetric: {
+          read: true,
+        },
+        session: {
+          read: true,
+        },
+        shipment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyApp: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppCredit: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppInstallation: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppPurchaseOneTime: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppSubscription: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppUsageRecord: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyArticle: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyBillingAddress: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyBlog: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyBulkOperation: {
+          read: true,
+          actions: {
+            cancel: true,
+            complete: true,
+            create: true,
+            expire: true,
+            fail: true,
+            update: true,
+          },
+        },
+        shopifyCarrierService: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCatalog: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckout: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckoutAppliedGiftCard: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckoutLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckoutShippingRate: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCollect: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCollection: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyComment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCustomer: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCustomerAddress: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyDeliveryMethod: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyExchangeLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFile: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentEvent: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentHold: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentOrder: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentOrderDestination: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentOrderLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentOrderMerchantRequest: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentService: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyGdprRequest: {
+          read: true,
+          actions: {
+            create: true,
+            update: true,
+          },
+        },
+        shopifyInventoryItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyInventoryLevel: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyInventoryQuantity: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyLocation: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyOrder: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyOrderAdjustment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyOrderLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyOrderTransaction: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyPage: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyPriceList: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyPriceListPrice: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProduct: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProductMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProductOption: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProductVariant: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProductVariantMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyQuantityPriceBreak: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyRedirect: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyRefund: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyRefundDuty: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyRefundLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReturn: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReturnLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReturnShippingFee: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseDelivery: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseDeliveryLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseFulfillmentOrder: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseFulfillmentOrderDisposition: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseFulfillmentOrderLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyScriptTag: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyShippingAddress: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyShippingLine: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyShop: {
+          read: true,
+          actions: {
+            install: true,
+            reinstall: true,
+            uninstall: true,
+            update: true,
+          },
+        },
+        shopifySync: {
+          read: true,
+          actions: {
+            abort: true,
+            complete: true,
+            error: true,
+            run: true,
+          },
+        },
+        shopifyTenderTransaction: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        slaTarget: {
+          read: true,
+        },
+        taxRule: {
+          read: true,
+        },
+        tenantRole: {
+          read: true,
+        },
+        user: {
+          read: true,
+          actions: {
+            changePassword: true,
+            delete: true,
+            resetPassword: true,
+            sendResetPassword: true,
+            sendVerifyEmail: true,
+            signIn: true,
+            signOut: true,
+            signUp: true,
+            update: true,
+            verifyEmail: true,
+          },
+        },
+        vendor: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProduct: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductOption: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductVariant: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorProductVariantMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        vendorReturn: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        webhookEndpoint: {
+          read: true,
+        },
+        workspace: {
+          read: true,
+        },
+      },
+      actions: {
+        scheduledShopifySync: true,
+      },
     },
     "Super Admin": {
       storageKey: "g5EWJBCs1B64",
@@ -1262,6 +3051,14 @@ export const permissions: GadgetPermissions = {
             update: true,
           },
         },
+        design: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
         featureFlag: {
           read: true,
         },
@@ -1272,6 +3069,133 @@ export const permissions: GadgetPermissions = {
           read: true,
         },
         financeReconciliation: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        fulfillmentAction: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        incident: {
+          read: true,
+        },
+        integration: {
+          read: true,
+        },
+        integrationCredential: {
+          read: true,
+        },
+        integrationState: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        invite: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            resend: true,
+          },
+        },
+        jigTemplate: {
+          read: true,
+        },
+        logForwarder: {
+          read: true,
+        },
+        membership: {
+          read: true,
+        },
+        order: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        organization: {
+          read: true,
+        },
+        payment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        payoutSchedule: {
+          read: true,
+        },
+        printerDevice: {
+          read: true,
+        },
+        printJob: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        printProfile: {
+          read: true,
+        },
+        product: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        reportDefinition: {
+          read: true,
+        },
+        reportRun: {
+          read: true,
+        },
+        routingPolicy: {
+          read: true,
+        },
+        routingPolicyAudit: {
+          read: true,
+        },
+        routingPolicyVendor: {
+          read: true,
+        },
+        routingRule: {
+          read: true,
+        },
+        routingSimulation: {
+          read: true,
+        },
+        scheduledReport: {
+          read: true,
+        },
+        schemaChange: {
+          read: true,
+        },
+        secret: {
+          read: true,
+        },
+        secretVersion: {
+          read: true,
+        },
+        seller: {
           read: true,
           actions: {
             create: true,
@@ -1319,6 +3243,608 @@ export const permissions: GadgetPermissions = {
             update: true,
           },
         },
+        serviceMetric: {
+          read: true,
+        },
+        session: {
+          read: true,
+        },
+        shipment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyApp: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppCredit: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppInstallation: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppPurchaseOneTime: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppSubscription: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyAppUsageRecord: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyArticle: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyBillingAddress: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyBlog: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyBulkOperation: {
+          read: true,
+          actions: {
+            cancel: true,
+            complete: true,
+            create: true,
+            expire: true,
+            fail: true,
+            update: true,
+          },
+        },
+        shopifyCarrierService: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCatalog: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckout: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckoutAppliedGiftCard: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckoutLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCheckoutShippingRate: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCollect: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCollection: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyComment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCustomer: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyCustomerAddress: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyDeliveryMethod: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyExchangeLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFile: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentEvent: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentHold: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentOrder: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentOrderDestination: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentOrderLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentOrderMerchantRequest: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyFulfillmentService: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyGdprRequest: {
+          read: true,
+          actions: {
+            create: true,
+            update: true,
+          },
+        },
+        shopifyInventoryItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyInventoryLevel: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyInventoryQuantity: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyLocation: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyOrder: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyOrderAdjustment: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyOrderLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyOrderTransaction: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyPage: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyPriceList: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyPriceListPrice: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProduct: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProductMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProductOption: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProductVariant: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyProductVariantMedia: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyQuantityPriceBreak: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyRedirect: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyRefund: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyRefundDuty: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyRefundLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReturn: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReturnLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReturnShippingFee: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseDelivery: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseDeliveryLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseFulfillmentOrder: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseFulfillmentOrderDisposition: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyReverseFulfillmentOrderLineItem: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyScriptTag: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyShippingAddress: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyShippingLine: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        shopifyShop: {
+          read: true,
+          actions: {
+            install: true,
+            reinstall: true,
+            uninstall: true,
+            update: true,
+          },
+        },
+        shopifySync: {
+          read: true,
+          actions: {
+            abort: true,
+            complete: true,
+            error: true,
+            run: true,
+          },
+        },
+        shopifyTenderTransaction: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        slaTarget: {
+          read: true,
+        },
+        taxRule: {
+          read: true,
+        },
+        tenantRole: {
+          read: true,
+        },
+        user: {
+          read: true,
+          actions: {
+            changePassword: true,
+            delete: true,
+            resetPassword: true,
+            sendResetPassword: true,
+            sendVerifyEmail: true,
+            signIn: true,
+            signOut: true,
+            signUp: true,
+            update: true,
+            verifyEmail: true,
+          },
+        },
+        vendor: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
         vendorProduct: {
           read: true,
           actions: {
@@ -1359,6 +3885,23 @@ export const permissions: GadgetPermissions = {
             update: true,
           },
         },
+        vendorReturn: {
+          read: true,
+          actions: {
+            create: true,
+            delete: true,
+            update: true,
+          },
+        },
+        webhookEndpoint: {
+          read: true,
+        },
+        workspace: {
+          read: true,
+        },
+      },
+      actions: {
+        scheduledShopifySync: true,
       },
     },
   },

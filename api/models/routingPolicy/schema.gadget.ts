@@ -51,7 +51,6 @@ export const schema: GadgetModel = {
     },
     maxLagMinutes: {
       type: "number",
-      decimals: 0,
       validations: { required: true },
       storageKey: "routingPolicyMaxLagMinutes",
     },
@@ -96,7 +95,6 @@ export const schema: GadgetModel = {
     },
     slaMinutes: {
       type: "number",
-      decimals: 0,
       validations: { required: true },
       storageKey: "routingPolicySlaMinutes",
     },

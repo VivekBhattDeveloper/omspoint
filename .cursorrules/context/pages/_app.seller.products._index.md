@@ -1,104 +1,39 @@
-Title: _app.seller.products._index — Content Spec (Seller Product Index)
+Title: _app.seller.products._index page
+Route file: web/routes/_app.seller.products._index.tsx
+Suggested path: /seller/products
 
-Route file
-- web/routes/_app.seller.products._index.tsx
+Role/Purpose
+- Give sellers a catalog control center summarizing product coverage, status mix, and variant footprint.
+- Provide quick navigation to create or edit seller-specific products while handling API issues gracefully.
 
-Path
-- /app/seller/products
+Primary UI Components
+- `PageHeader` with dynamic description summarizing totals and a `New product` CTA.
+- Three KPI `Card`s for total products (with status breakdown), variants managed, and channel coverage/top channel.
+- Optional `Alert` banner indicating sample dataset usage or handle fallback warnings.
+- `Card`-wrapped `Table` listing product title/handle, channel/status badges, variant count, last update, and inline edit button.
 
----
+Data Dependencies
+- Loader calls `context.api.sellerProduct.findMany` (first 250) selecting id/title/handle/channel/status/updatedAt + variant edges.
+- If the API rejects the `handle` select, loader retries without it and surfaces warning; on total failure returns curated `sampleProducts`.
+- Loader computes stats (`total`, `statusCounts`, `totalVariants`, `averageVariants`, `uniqueChannels`, `topChannel`) and flags `isSample`.
 
-Role / Purpose
-- Provide an overview of all seller-managed products with key performance insights.
-- Track catalog health, status distribution, channel coverage, and variant volume.
-- Offer direct navigation to creation (/new) and record-level editing (/:id).
-
-Primary Objectives
-1. Display summary KPIs of the seller’s catalog.
-2. Provide searchable/sortable/paginated table of seller products.
-3. Enable quick access to add new product or edit existing ones.
-
----
-
-Page Layout Structure
-- PageHeader
-  • Title: “Seller Products”
-  • Description: short context line (e.g., “Track catalog health, channels, statuses, and manage variants.”)
-  • CTA: New Product → routes to /app/seller/products/new
-
-- KPI Cards (3 total)
-  1) Products — total count, per-status breakdown badges (active/draft/archived)
-  2) Channels — unique channel count, most active channel label
-  3) Variants — total variant count, average per product
-
-- AutoTable
-  • Data source: api.sellerProduct.findMany (first 250 records)
-  • Columns:
-    - Product Title / Handle
-    - Channel Badge
-    - Status Badge
-    - Variant Count
-    - Last Updated
-    - Inline Edit button → /app/seller/products/:id
-
----
-
-Loader Data Contract
-Query: context.api.sellerProduct.findMany({ take:250, select:{ id,title,handle,status,channel,updatedAt, variants:{select:{id:true}}, seller:{select:{id:true,name:true}} } })
-
-Derived Metrics:
-- statusCounts: per status (active/draft/archived/unassigned)
-- channelCounts: per unique channel
-- topChannel: label with max frequency
-- totalProducts, totalVariants, avgVariants
-
-Returned JSON Structure:
-{
-  rows: [ { id,title,handle,status,channel,updatedAt,variantCount } ],
-  kpis: { totalProducts, statusCounts, uniqueChannels, topChannel, totalVariants, avgVariants }
-}
-
----
-
-UI Details
-- KPI Cards responsive grid: 1‑3 columns depending on screen width.
-- Table interactions:
-  • Sorting by title, updatedAt, or variantCount.
-  • Pagination controls (25 rows default per page).
-  • Graceful fallbacks: “Untitled product”, “—” for missing fields.
-- Status badges:
-  • active → default color
-  • draft → secondary
-  • archived → outline
-  • paused → destructive
-  • unassigned → muted
-- Channel badges color‑coded per marketplace (future‑extendable).
-
----
-
-Actions & Navigation
-- “New Product” → /app/seller/products/new
-- “Edit” per row → /app/seller/products/:id
-- No destructive actions here (read-only overview)
-
----
+Actions & Side Effects
+- Table rows and inline edit button navigate to `/seller/products/:id`; CTA routes to `/seller/products/new`.
+- Alerts render when `isSample` true or when loader captured handle errors.
+- Badges derive visual variants from channel/status mapping helpers to keep colors consistent.
 
 Acceptance Criteria
-- KPI cards show correct totals & averages.
-- Table lists all seller products with accurate fields.
-- Edit and New buttons navigate without page reload.
-- Status and Channel badges display consistent, accessible colors.
+- Loader handles three states: full data, handle fallback (no handles but still renders), and total failure (sample data + alert).
+- Stats summarize the same dataset as the table (counts align).
+- Table rows focusable and keyboard-activated (`Enter`/`Space`) to open detail page.
+- Description copy adapts when there are zero products, guiding user to create their first product.
 
----
-
-QA / Tests
-- Unit: verify loader aggregation logic for statusCounts, topChannel, avgVariants.
-- UI: confirm table data & counts render correctly, navigation works.
-- Accessibility: all buttons have focus states, badges maintain contrast.
-
----
+QA & Tests
+- Manual: Force handle error to confirm fallback message and absence of handles.
+- Manual: Simulate API failure to confirm sample data appears with alert.
+- Manual: Validate badge variants and table navigation work on keyboard and mobile.
+- Unit: cover `computeStats`, `channelBadgeVariant`, and `statusBadgeVariant` helpers.
 
 Notes
-- Extend channel color mapping when adding more marketplaces.
-- Keep strict seller scoping (sellerId = currentUser.sellerId).
-- Future: Add filters (by status/channel), global search, export CSV.
+- Replace static sample dataset once backend reliability improves; consider caching results.
+- Introduce filtering/pagination when product volume exceeds 250 records.

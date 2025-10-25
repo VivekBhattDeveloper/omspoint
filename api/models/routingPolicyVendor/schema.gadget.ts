@@ -11,25 +11,21 @@ export const schema: GadgetModel = {
   fields: {
     autoPauseThreshold: {
       type: "number",
-      decimals: 0,
       validations: { required: true },
       storageKey: "routingPolicyVendorAutoPause",
     },
     capacityPerHour: {
       type: "number",
-      decimals: 0,
       validations: { required: true },
       storageKey: "routingPolicyVendorCapacityPerHour",
     },
     currentLoadPercent: {
       type: "number",
-      decimals: 0,
       validations: { required: true },
       storageKey: "routingPolicyVendorCurrentLoad",
     },
     failoverPriority: {
       type: "number",
-      decimals: 0,
       validations: { required: true },
       storageKey: "routingPolicyVendorFailoverPriority",
     },
@@ -59,7 +55,6 @@ export const schema: GadgetModel = {
     },
     slaMinutes: {
       type: "number",
-      decimals: 0,
       validations: { required: true },
       storageKey: "routingPolicyVendorSlaMinutes",
     },
@@ -76,7 +71,6 @@ export const schema: GadgetModel = {
     },
     weight: {
       type: "number",
-      decimals: 0,
       validations: { required: true },
       storageKey: "routingPolicyVendorWeight",
     },

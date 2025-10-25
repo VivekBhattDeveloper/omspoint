@@ -3,22 +3,34 @@ Route file: web/routes/_app.seller.finance.$id.tsx
 Suggested path: /app/seller/finance/:id
 
 Role/Purpose
-- TODO: Describe the purpose and key user goals for this page.
+- Give sellers a detail view of a payout, including amount, method, payout timing, and linked order.
+- Allow quick edits to settlement fields while keeping a task checklist visible.
 
 Primary UI Components
-- TODO: List components (use web/components/ui/* primitives).
+- `PageHeader` with dynamic title from orderId and back button.
+- KPI cards showing amount, payout timing, and follow-up checklist.
+- `Card` containing `AutoForm` for payment fields (`amount`, `paymentMethod`, `paymentDate`, `order`).
 
 Data Dependencies
-- TODO: Models/queries/actions required; note tenant scoping.
+- Loader fetches payment via `context.api.payment.findOne` selecting amount, method, payout date, and order relation.
+- AutoForm updates record through `api.payment.update`.
 
 Actions & Side Effects
-- TODO: Mutations, validations, draft/publish, confirmations.
+- Save submits AutoForm and redirects to `/seller/finance` on success.
+- Header back and footer cancel buttons call `navigate(-1)` without mutation.
+- Currency/date fields formatted via `Intl.NumberFormat` and `Intl.DateTimeFormat`.
 
 Acceptance Criteria
-- TODO: Bullet criteria to mark this page complete.
+- Loader must return payment data; missing records should trigger route-level error handling.
+- Cards display friendly fallbacks (`—`) when optional fields absent.
+- AutoForm respects model validation and shows errors in `SubmitResultBanner`.
+- Navigation buttons do not submit the form.
 
 QA & Tests
-- TODO: Happy/unhappy paths; unit tests for logic; E2E if critical.
+- Manual: Update payment method/date and confirm redirect + persisted change.
+- Manual: Trigger validation errors (e.g., blank amount) to verify inline messaging.
+- Manual: Use back/cancel buttons to ensure navigation occurs without API call.
 
 Notes
-- Scaffold generated; refine before development.
+- Consider surfacing currency from tenant context rather than hardcoded USD.
+- Checklist copy is static; replace with dynamic tasks when workflow tooling exists.

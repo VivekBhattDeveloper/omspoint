@@ -9,10 +9,10 @@ import {
   AutoSubmit,
   SubmitResultBanner,
 } from "@/components/auto";
+import { DataState } from "@/components/app/data-state";
 import { PageHeader } from "@/components/app/page-header";
 import { StatusBadge } from "@/components/app/status-badge";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "../api";
 import type { Route } from "./+types/_app.seller.orders.$id";
@@ -143,13 +143,9 @@ export default function SellerOrderDetail({ loaderData }: Route.ComponentProps) 
           }
         />
 
-        <Alert>
-          <AlertTitle>Sample dataset</AlertTitle>
-          <AlertDescription>
-            Unable to load this seller order from the API. Displaying curated sample data instead.
-            {errorMessage ? ` Error: ${errorMessage}` : ""}
-          </AlertDescription>
-        </Alert>
+        <DataState variant="sample">
+          {errorMessage ? <span className="block pt-1 text-xs text-muted-foreground">Error: {errorMessage}</span> : null}
+        </DataState>
 
         <div className="grid gap-4 md:grid-cols-3">
           <Card>

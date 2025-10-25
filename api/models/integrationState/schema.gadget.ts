@@ -36,7 +36,6 @@ export const schema: GadgetModel = {
     },
     ticketCount: {
       type: "number",
-      decimals: 0,
       validations: { required: true },
       storageKey: "XCQtmOWchqtj",
     },

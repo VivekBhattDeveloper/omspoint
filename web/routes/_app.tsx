@@ -150,6 +150,7 @@ export default function ({ loaderData }: Route.ComponentProps) {
           </div>
           <div className="ml-auto md:ml-0">
             <SecondaryNavigation
+              userId={user?.id}
               icon={
                 <>
                   <UserIcon user={user} />

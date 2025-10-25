@@ -11,7 +11,6 @@ export const schema: GadgetModel = {
   fields: {
     position: {
       type: "number",
-      decimals: 0,
       storageKey: "vendorProductVariantMedia::position",
     },
     productVariant: {

@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useNavigate } from "react-router";
 import {
   AutoBelongsToInput,
@@ -15,476 +14,208 @@ import {
   AutoSubmit,
   SubmitResultBanner,
 } from "@/components/auto";
+import { DataState } from "@/components/app/data-state";
 import { PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { sellerProductFormSelect } from "@/lib/sellerProductSelect";
 import { api } from "../api";
 import type { Route } from "./+types/_app.seller.products.$id";
+import { Provider as GadgetProvider } from "@gadgetinc/react";
 
-type SellerProductRecord = Route.ComponentProps["loaderData"]["product"];
-
-type LoaderResult = Route.ComponentProps["loaderData"];
-
-const sampleProducts: Record<string, SellerProductRecord> = {
-  "seller-product-sample-1": {
-    id: "seller-product-sample-1",
-    title: "Marketplace Skyline Poster",
-    handle: "market-skyline-poster",
-    status: "active",
-    seller: { id: "sample-seller", name: "Marketplace Demo Seller" },
-    vendorProductId: null,
-    productType: "Poster",
-    category: "Wall Art",
-    tags: "skyline, city",
-    templateSuffix: null,
-    body: {
-      markdown: "### Marketplace Skyline Poster\n\nA hero print celebrating the shops skyline. Includes matte finish preview and ready-to-ship packaging notes.",
-      truncatedHTML:
-        "<h3>Marketplace Skyline Poster</h3><p>A hero print celebrating the shops skyline. Includes matte finish preview and ready-to-ship packaging notes.</p>",
-    },
-    publishedAt: "2024-03-02T11:00:00.000Z",
-    updatedAt: "2024-03-02T13:45:00.000Z",
-    variants: {
-      edges: [
-        {
-          node: {
-            id: "seller-product-sample-variant-1",
-            title: "12x18 in",
-            sku: "SKYLINE-12x18",
-            barcode: "012345678905",
-            price: "24.00",
-            compareAtPrice: "28.00",
-            position: 1,
-            availableForSale: true,
-            taxable: true,
-            taxCode: "ART-GST",
-            inventoryPolicy: "deny",
-            inventoryQuantity: 12,
-            option1: "12x18 in",
-            option2: null,
-            option3: null,
-            selectedOptions: [
-              { name: "Size", value: "12x18 in" },
-            ],
-            presentmentPrices: null,
-            inventoryItem: { id: "inventory-sample-1", sku: "SKYLINE-12x18" },
-            media: { edges: [] },
-          },
-        },
-        {
-          node: {
-            id: "seller-product-sample-variant-2",
-            title: "18x24 in",
-            sku: "SKYLINE-18x24",
-            barcode: "012345678912",
-            price: "32.00",
-            compareAtPrice: null,
-            position: 2,
-            availableForSale: true,
-            taxable: true,
-            taxCode: "ART-GST",
-            inventoryPolicy: "continue",
-            inventoryQuantity: 6,
-            option1: "18x24 in",
-            option2: null,
-            option3: null,
-            selectedOptions: [
-              { name: "Size", value: "18x24 in" },
-            ],
-            presentmentPrices: null,
-            inventoryItem: { id: "inventory-sample-2", sku: "SKYLINE-18x24" },
-            media: { edges: [] },
-          },
-        },
-      ],
-    },
-    media: {
-      edges: [
-        {
-          node: {
-            id: "seller-product-sample-media-1",
-            position: 1,
-            file: { id: "sample-file-1", filename: "skyline-poster-front.png" },
-          },
-        },
-        {
-          node: {
-            id: "seller-product-sample-media-2",
-            position: 2,
-            file: { id: "sample-file-2", filename: "skyline-poster-packaging.png" },
-          },
-        },
-      ],
-    },
-  },
-  "seller-product-sample-2": {
-    id: "seller-product-sample-2",
-    title: "Exclusive Pride Tee",
-    handle: "exclusive-pride-tee",
-    status: "draft",
-    seller: { id: "sample-seller", name: "Marketplace Demo Seller" },
-    vendorProductId: "vendor-product-sample-2",
-    productType: "Apparel",
-    category: "T-Shirts",
-    tags: "pride, limited",
-    templateSuffix: null,
-    body: {
-      markdown: "Celebrate all identities with this limited-run tee. Soft cotton blend with tear-away label.",
-      truncatedHTML:
-        "<p>Celebrate all identities with this limited-run tee. Soft cotton blend with tear-away label.</p>",
-    },
-    publishedAt: null,
-    updatedAt: "2024-02-26T15:30:00.000Z",
-    variants: {
-      edges: [
-        {
-          node: {
-            id: "seller-product-sample-variant-3",
-            title: "Small",
-            sku: "PRIDE-TEE-S",
-            barcode: null,
-            price: "19.50",
-            compareAtPrice: null,
-            position: 1,
-            availableForSale: true,
-            taxable: true,
-            taxCode: "APP-GST",
-            inventoryPolicy: "continue",
-            inventoryQuantity: 15,
-            option1: "Small",
-            option2: null,
-            option3: null,
-            selectedOptions: [{ name: "Size", value: "Small" }],
-            presentmentPrices: null,
-            inventoryItem: { id: "inventory-sample-3", sku: "PRIDE-TEE-S" },
-            media: { edges: [] },
-          },
-        },
-        {
-          node: {
-            id: "seller-product-sample-variant-4",
-            title: "Medium",
-            sku: "PRIDE-TEE-M",
-            barcode: null,
-            price: "19.50",
-            compareAtPrice: null,
-            position: 2,
-            availableForSale: true,
-            taxable: true,
-            taxCode: "APP-GST",
-            inventoryPolicy: "continue",
-            inventoryQuantity: 10,
-            option1: "Medium",
-            option2: null,
-            option3: null,
-            selectedOptions: [{ name: "Size", value: "Medium" }],
-            presentmentPrices: null,
-            inventoryItem: { id: "inventory-sample-4", sku: "PRIDE-TEE-M" },
-            media: { edges: [] },
-          },
-        },
-        {
-          node: {
-            id: "seller-product-sample-variant-5",
-            title: "Large",
-            sku: "PRIDE-TEE-L",
-            barcode: null,
-            price: "19.50",
-            compareAtPrice: null,
-            position: 3,
-            availableForSale: true,
-            taxable: true,
-            taxCode: "APP-GST",
-            inventoryPolicy: "continue",
-            inventoryQuantity: 8,
-            option1: "Large",
-            option2: null,
-            option3: null,
-            selectedOptions: [{ name: "Size", value: "Large" }],
-            presentmentPrices: null,
-            inventoryItem: { id: "inventory-sample-5", sku: "PRIDE-TEE-L" },
-            media: { edges: [] },
-          },
-        },
-      ],
-    },
-    media: {
-      edges: [
-        {
-          node: {
-            id: "seller-product-sample-media-3",
-            position: 1,
-            file: { id: "sample-file-3", filename: "pride-tee-front.png" },
-          },
-        },
-      ],
-    },
-  },
-  "seller-product-sample-3": {
-    id: "seller-product-sample-3",
-    title: "Limited Edition Mug",
-    handle: "limited-edition-mug",
-    status: "archived",
-    seller: { id: "sample-seller", name: "Marketplace Demo Seller" },
-    vendorProductId: null,
-    productType: "Drinkware",
-    category: "Mugs",
-    tags: "limited, ceramic",
-    templateSuffix: null,
-    body: {
-      markdown: "Microwave-safe ceramic mug with metallic gold accent. Was retired after Winter 2023 collection.",
-      truncatedHTML:
-        "<p>Microwave-safe ceramic mug with metallic gold accent. Was retired after Winter 2023 collection.</p>",
-    },
-    publishedAt: "2023-11-18T09:15:00.000Z",
-    updatedAt: "2024-02-20T09:15:00.000Z",
-    variants: {
-      edges: [
-        {
-          node: {
-            id: "seller-product-sample-variant-6",
-            title: "Standard",
-            sku: "MUG-LIMITED",
-            barcode: "012345678929",
-            price: "18.00",
-            compareAtPrice: "22.00",
-            position: 1,
-            availableForSale: false,
-            taxable: true,
-            taxCode: "HOME-GST",
-            inventoryPolicy: "deny",
-            inventoryQuantity: 0,
-            option1: "Standard",
-            option2: null,
-            option3: null,
-            selectedOptions: [{ name: "Size", value: "Standard" }],
-            presentmentPrices: null,
-            inventoryItem: { id: "inventory-sample-6", sku: "MUG-LIMITED" },
-            media: { edges: [] },
-          },
-        },
-      ],
-    },
-    media: {
-      edges: [
-        {
-          node: {
-            id: "seller-product-sample-media-4",
-            position: 1,
-            file: { id: "sample-file-4", filename: "limited-mug-front.png" },
-          },
-        },
-      ],
-    },
-  },
+const sampleProduct = {
+  id: "seller-product-sample",
+  title: "Sample Product",
+  handle: "sample-product",
+  status: "draft",
+  channel: "manual",
+  channelStatus: "draft",
+  channelProductId: null,
+  channelHandle: null,
+  channelSettings: null,
+  channelPublishingErrors: null,
+  seller: { id: "sample-seller", name: "Demo Seller" },
+  shop: null,
+  order: null,
+  vendorCode: null,
+  vendorProductId: null,
+  productType: "Poster",
+  productCategory: "Wall Art",
+  category: "Home & Living",
+  tags: "demo, sample",
+  templateSuffix: null,
+  hasVariantsThatRequiresComponents: false,
+  trackInventory: true,
+  continueSellingWhenOutOfStock: false,
+  body: { markdown: "## Sample product\n\nPopulate fields once API access is restored.", truncatedHTML: "<h2>Sample product</h2><p>Populate fields once API access is restored.</p>" },
+  publishedAt: null,
+  updatedAt: null,
+  compareAtPriceRange: null,
+  generatedImages: null,
+  designAssignments: null,
+  designId: null,
+  mockupConfig: null,
+  mockupAssets: null,
+  optionsData: null,
+  variantsData: null,
+  mediaData: null,
+  customCollections: null,
+  seoTitle: "Sample product",
+  seoDescription: "Demo record while the API is unavailable.",
+  options: { edges: [] },
+  variants: { edges: [] },
+  media: { edges: [] },
 };
 
 export const loader = async ({ context, params }: Route.LoaderArgs) => {
-  const sampleProduct = sampleProducts[params.id];
-  if (sampleProduct) {
+  try {
+    const product = await context.api.sellerProduct.findOne(params.id, { select: sellerProductFormSelect });
+    return { product, isSample: false } satisfies Route.ComponentProps["loaderData"];
+  } catch (error) {
+    console.error("Failed to load seller product", error);
     return {
       product: sampleProduct,
       isSample: true,
-    } satisfies LoaderResult;
-  }
-
-  try {
-    const product = await context.api.sellerProduct.findOne(params.id, {
-      select: {
-        id: true,
-        title: true,
-        handle: true,
-        status: true,
-        seller: { id: true, name: true },
-        vendorProductId: true,
-        productType: true,
-        category: true,
-        tags: true,
-        templateSuffix: true,
-        body: { markdown: true, truncatedHTML: true },
-        publishedAt: true,
-        updatedAt: true,
-        variants: {
-          edges: {
-            node: {
-              id: true,
-              title: true,
-              sku: true,
-              barcode: true,
-              price: true,
-              compareAtPrice: true,
-              position: true,
-              availableForSale: true,
-              taxable: true,
-              taxCode: true,
-              inventoryPolicy: true,
-              inventoryQuantity: true,
-              option1: true,
-              option2: true,
-              option3: true,
-              selectedOptions: true,
-              presentmentPrices: true,
-              inventoryItem: { id: true, sku: true },
-              media: {
-                edges: {
-                  node: {
-                    id: true,
-                    position: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        media: {
-          edges: {
-            node: {
-              id: true,
-              position: true,
-              file: { id: true, filename: true },
-            },
-          },
-        },
-      },
-    });
-
-    return {
-      product,
-      isSample: false,
-    } satisfies LoaderResult;
-  } catch (error) {
-    console.error("Failed to load seller product", error);
-    const fallbackProduct = sampleProducts["seller-product-sample-1"];
-
-    return {
-      product:
-        fallbackProduct ?? {
-          id: params.id,
-          title: "Unavailable product",
-          status: "draft",
-          handle: params.id,
-          seller: null,
-          vendorProductId: null,
-          productType: null,
-          category: null,
-          tags: null,
-          templateSuffix: null,
-          body: { markdown: null, truncatedHTML: null },
-          publishedAt: null,
-          updatedAt: null,
-          variants: { edges: [] },
-          media: { edges: [] },
-        },
-      isSample: true,
       errorMessage: error instanceof Error ? error.message : undefined,
-    } satisfies LoaderResult;
+    } satisfies Route.ComponentProps["loaderData"];
+  }
+};
+
+const statusBadgeVariant = (status: string | null | undefined) => {
+  switch (status) {
+    case "active":
+      return "default";
+    case "draft":
+      return "secondary";
+    case "archived":
+    default:
+      return "outline";
+  }
+};
+
+const channelBadgeVariant = (channel: string | null | undefined) => {
+  switch (channel) {
+    case "shopify":
+    case "manual":
+      return "default";
+    case "amazon":
+    case "woocommerce":
+      return "secondary";
+    case "etsy":
+    case "custom":
+      return "outline";
+    case "magento":
+      return "destructive";
+    default:
+      return "outline";
   }
 };
 
 export default function SellerProductDetail({ loaderData }: Route.ComponentProps) {
-  const { product, isSample, errorMessage } = loaderData;
+  const { product, isSample, errorMessage } = loaderData as Route.ComponentProps["loaderData"] & {
+    isSample?: boolean;
+    errorMessage?: string;
+  };
   const navigate = useNavigate();
   const dateFormatter = useMemo(
     () => new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }),
     [],
   );
-  const productVariants = (product.variants?.edges ?? [])
-    .map((edge) => edge?.node)
-    .filter((variant): variant is NonNullable<typeof variant> => Boolean(variant));
-  const productMedia = (product.media?.edges ?? [])
-    .map((edge) => edge?.node)
-    .filter((mediaItem): mediaItem is NonNullable<typeof mediaItem> => Boolean(mediaItem));
+  const variantNodes =
+    product.variants?.edges
+      ?.map((edge) => edge?.node)
+      .filter((variant): variant is NonNullable<typeof variant> => Boolean(variant)) ?? [];
+  const mediaNodes =
+    product.media?.edges
+      ?.map((edge) => edge?.node)
+      .filter((mediaItem): mediaItem is NonNullable<typeof mediaItem> => Boolean(mediaItem)) ?? [];
+
+  const header = (
+    <PageHeader
+      title={product.title ?? "Seller product"}
+      description={
+        <>
+          <span className="inline-flex items-center gap-2">
+            <Badge variant={statusBadgeVariant(product.status)} className="capitalize">
+              {product.status ?? "draft"}
+            </Badge>
+            <Badge variant={channelBadgeVariant(product.channel)}>{product.channel ?? "Unassigned"}</Badge>
+          </span>
+          {product.updatedAt ? (
+            <span className="block text-sm text-muted-foreground">
+              Last updated {dateFormatter.format(new Date(product.updatedAt))}
+            </span>
+          ) : null}
+        </>
+      }
+      actions={
+        <Button variant="outline" onClick={() => navigate("/seller/products")}>
+          Back to list
+        </Button>
+      }
+    />
+  );
 
   if (isSample) {
     return (
       <div className="space-y-6">
-        <PageHeader
-          title={product.title ?? "Seller product"}
-          description={
-            <>
-              <span className="inline-flex items-center gap-2">
-                <Badge variant="outline" className="capitalize">
-                  {product.status ?? "draft"}
-                </Badge>
-              </span>
-              {product.updatedAt ? (
-                <span className="block text-sm text-muted-foreground">
-                  Last updated {dateFormatter.format(new Date(product.updatedAt))}
-                </span>
-              ) : null}
-            </>
-          }
-          actions={
-            <Button variant="outline" onClick={() => navigate("/seller/products")}>
-              Back to list
-            </Button>
-          }
-        />
-
-        <Alert>
-          <AlertTitle>Sample dataset</AlertTitle>
-          <AlertDescription>
-            Unable to load this seller product from the API. Displaying curated sample data instead.
-            {errorMessage ? ` Error: ${errorMessage}` : ""}
-          </AlertDescription>
-        </Alert>
+        {header}
+        <DataState variant="sample">
+          {errorMessage ? <span className="block pt-1 text-xs text-muted-foreground">Error: {errorMessage}</span> : null}
+        </DataState>
 
         <Card>
           <CardHeader>
             <CardTitle>Product snapshot</CardTitle>
-            <CardDescription>Read-only view of the reference product while the API is unavailable.</CardDescription>
+            <CardDescription>Read-only summary while the live record is unavailable.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">Handle</div>
-                <div className="font-medium">{product.handle ?? "—"}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">Seller</div>
-                <div className="font-medium">{product.seller?.name ?? "Marketplace demo"}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">Product type</div>
-                <div className="font-medium">{product.productType ?? "—"}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">Category</div>
-                <div className="font-medium">{product.category ?? "—"}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">Tags</div>
-                <div className="font-medium">{product.tags ?? "—"}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">Vendor product</div>
-                <div className="font-medium">{product.vendorProductId ?? "Unlinked"}</div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">Published</div>
-                <div className="font-medium">
-                  {product.publishedAt ? dateFormatter.format(new Date(product.publishedAt)) : "Not published"}
-                </div>
-              </div>
+          <CardContent className="grid gap-4 md:grid-cols-2 text-sm text-muted-foreground">
+            <div>
+              <div className="text-muted-foreground">Handle</div>
+              <div className="font-medium text-foreground">{product.handle ?? product.id}</div>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground mb-1">Description</div>
-              <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                {product.body?.markdown ?? "No description available."}
-              </p>
+              <div className="text-muted-foreground">Seller</div>
+              <div className="font-medium text-foreground">{product.seller?.name ?? "Marketplace seller"}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Channel status</div>
+              <div className="font-medium text-foreground">{product.channelStatus ?? "draft"}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Vendor product</div>
+              <div className="font-medium text-foreground">{product.vendorProductId ?? "Unlinked"}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Product type</div>
+              <div className="font-medium text-foreground">{product.productType ?? "—"}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Category</div>
+              <div className="font-medium text-foreground">{product.category ?? "—"}</div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
+            <CardTitle>Description</CardTitle>
+            <CardDescription>Marketing copy captured for this product.</CardDescription>
+          </CardHeader>
+          <CardContent className="prose prose-sm max-w-none text-muted-foreground">
+            <p className="whitespace-pre-wrap">{product.body?.markdown ?? "No description available."}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Variants</CardTitle>
-            <CardDescription>Snapshot of variant pricing and inventory.</CardDescription>
+            <CardDescription>Pricing and availability snapshot.</CardDescription>
           </CardHeader>
           <CardContent>
-            {productVariants.length > 0 ? (
+            {variantNodes.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -495,7 +226,7 @@ export default function SellerProductDetail({ loaderData }: Route.ComponentProps
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {productVariants.map((variant) => (
+                  {variantNodes.map((variant) => (
                     <TableRow key={variant.id}>
                       <TableCell>{variant.title ?? "Variant"}</TableCell>
                       <TableCell>{variant.sku ?? "—"}</TableCell>
@@ -514,20 +245,20 @@ export default function SellerProductDetail({ loaderData }: Route.ComponentProps
         <Card>
           <CardHeader>
             <CardTitle>Media</CardTitle>
-            <CardDescription>Reference files associated with this product.</CardDescription>
+            <CardDescription>Assets linked to this product.</CardDescription>
           </CardHeader>
           <CardContent>
-            {productMedia.length > 0 ? (
+            {mediaNodes.length > 0 ? (
               <ul className="space-y-2 text-sm">
-                {productMedia.map((mediaItem) => (
+                {mediaNodes.map((mediaItem) => (
                   <li key={mediaItem.id} className="flex items-center justify-between gap-4">
-                    <span className="font-medium">{mediaItem.file?.filename ?? "Asset"}</span>
+                    <span className="font-medium text-foreground">{mediaItem.file?.filename ?? "Asset"}</span>
                     <span className="text-muted-foreground">Position {mediaItem.position ?? "—"}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">No media captured in the sample dataset.</p>
+              <p className="text-sm text-muted-foreground">No media in the sample dataset.</p>
             )}
           </CardContent>
         </Card>
@@ -536,113 +267,51 @@ export default function SellerProductDetail({ loaderData }: Route.ComponentProps
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={product.title ?? "Seller product"}
-        description={
-          <>
-            <span className="inline-flex items-center gap-2">
-              <Badge variant="outline" className="capitalize">
-                {product.status ?? "draft"}
-              </Badge>
-            </span>
-            {product.updatedAt ? (
-              <span className="block text-sm text-muted-foreground">
-                Last updated {dateFormatter.format(new Date(product.updatedAt))}
-              </span>
-            ) : null}
-          </>
-        }
-        actions={
-          <Button variant="outline" onClick={() => navigate("/seller/products")}>
-            Back to list
-          </Button>
-        }
-      />
-
-      <AutoForm
-        action={api.sellerProduct.update}
-        findBy={product.id}
-        select={{
-          title: true,
-          handle: true,
-          status: true,
-          seller: { id: true },
-          productType: true,
-          category: true,
-          tags: true,
-          templateSuffix: true,
-          vendorProductId: true,
-          publishedAt: true,
-          body: { markdown: true },
-          media: {
-            edges: {
-              node: {
-                id: true,
-                position: true,
-                file: { id: true, filename: true },
-              },
-            },
-          },
-          variants: {
-            edges: {
-              node: {
-                id: true,
-                title: true,
-                sku: true,
-                barcode: true,
-                price: true,
-                compareAtPrice: true,
-                position: true,
-                availableForSale: true,
-                taxable: true,
-                taxCode: true,
-                inventoryPolicy: true,
-                inventoryQuantity: true,
-                option1: true,
-                option2: true,
-                option3: true,
-                selectedOptions: true,
-                presentmentPrices: true,
-                inventoryItem: { id: true, sku: true },
-                media: {
-                  edges: {
-                    node: {
-                      id: true,
-                      position: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        }}
-      >
+    <GadgetProvider api={api}>
+      <div className="space-y-6">
+      {header}
+      <AutoForm action={api.sellerProduct.update} findBy={product.id} select={sellerProductFormSelect}>
         <SubmitResultBanner />
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Product information</CardTitle>
-              <CardDescription>Update the core identifiers, taxonomy, and associations.</CardDescription>
+              <CardTitle>Basic information</CardTitle>
+              <CardDescription>Core identifiers, publication settings, and vendor linkage.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <AutoInput field="title" />
                 <AutoInput field="handle" />
                 <AutoEnumInput field="status" />
+                <AutoEnumInput field="channel" />
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <AutoBelongsToInput field="seller" />
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <AutoInput field="productType" />
-                <AutoInput field="category" />
-                <AutoInput field="tags" />
-                <AutoInput field="templateSuffix" />
+                <AutoEnumInput field="channelStatus" />
+                <AutoInput field="channelProductId" />
+                <AutoInput field="channelHandle" />
+                <AutoInput field="vendorCode" />
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <AutoInput field="vendorProductId" />
+                <AutoBelongsToInput field="seller" />
+                <AutoBelongsToInput field="shop" />
+                <AutoBelongsToInput field="order" />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <AutoInput field="productType" />
+                <AutoInput field="productCategory" />
+                <AutoInput field="category" />
+                <AutoInput field="templateSuffix" />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <AutoBooleanInput field="hasVariantsThatRequiresComponents" />
+                <AutoBooleanInput field="trackInventory" />
+                <AutoBooleanInput field="continueSellingWhenOutOfStock" />
                 <AutoDateTimePicker field="publishedAt" />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <AutoJSONInput field="compareAtPriceRange" />
+                <AutoJSONInput field="generatedImages" />
               </div>
               <AutoRichTextInput field="body" />
             </CardContent>
@@ -650,8 +319,41 @@ export default function SellerProductDetail({ loaderData }: Route.ComponentProps
 
           <Card>
             <CardHeader>
+              <CardTitle>Channel configuration</CardTitle>
+              <CardDescription>Per-channel metadata, sync preferences, and publishing diagnostics.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <AutoJSONInput field="channelSettings" />
+              <AutoJSONInput field="channelPublishingErrors" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Options & attributes</CardTitle>
+              <CardDescription>Manage product options and supporting structured data.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <AutoHasManyForm field="options" label="Options">
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <AutoInput field="name" />
+                    <AutoNumberInput field="position" />
+                  </div>
+                  <AutoJSONInput field="values" />
+                </div>
+              </AutoHasManyForm>
+              <div className="grid gap-4 md:grid-cols-2">
+                <AutoJSONInput field="optionsData" />
+                <AutoJSONInput field="variantsData" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Variants</CardTitle>
-              <CardDescription>Manage SKU-level pricing, inventory, and options.</CardDescription>
+              <CardDescription>Update SKU-level pricing, inventory, channel overrides, and media.</CardDescription>
             </CardHeader>
             <CardContent>
               <AutoHasManyForm field="variants" label="Variants">
@@ -663,6 +365,8 @@ export default function SellerProductDetail({ loaderData }: Route.ComponentProps
                     <AutoNumberInput field="position" />
                     <AutoInput field="price" />
                     <AutoInput field="compareAtPrice" />
+                    <AutoInput field="cost" />
+                    <AutoInput field="unitCost" />
                     <AutoBooleanInput field="availableForSale" />
                     <AutoBooleanInput field="taxable" />
                     <AutoInput field="taxCode" />
@@ -670,18 +374,30 @@ export default function SellerProductDetail({ loaderData }: Route.ComponentProps
                   <div className="grid gap-4 md:grid-cols-2">
                     <AutoInput field="inventoryPolicy" />
                     <AutoNumberInput field="inventoryQuantity" />
+                    <AutoBooleanInput field="requiresShipping" />
+                    <AutoInput field="hsCode" />
                   </div>
                   <div className="grid gap-4 md:grid-cols-3">
                     <AutoInput field="option1" />
                     <AutoInput field="option2" />
                     <AutoInput field="option3" />
                   </div>
+                  <AutoJSONInput field="optionLabels" />
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <AutoNumberInput field="weight" />
+                    <AutoInput field="weightUnit" />
+                  </div>
                   <AutoBelongsToInput field="inventoryItem" optionLabel="sku" />
+                  <AutoInput field="designId" />
                   <AutoJSONInput field="selectedOptions" />
                   <AutoJSONInput field="presentmentPrices" />
-
+                  <AutoJSONInput field="mockupConfig" />
                   <AutoHasManyForm field="media" label="Variant media">
-                    <div className="grid gap-4 md:grid-cols-1">
+                    <div className="space-y-4">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <AutoBelongsToInput field="file" optionLabel="filename" />
+                        <AutoInput field="alt" />
+                      </div>
                       <AutoNumberInput field="position" />
                     </div>
                   </AutoHasManyForm>
@@ -693,15 +409,56 @@ export default function SellerProductDetail({ loaderData }: Route.ComponentProps
           <Card>
             <CardHeader>
               <CardTitle>Product media</CardTitle>
-              <CardDescription>Attach shared imagery or assets across variants.</CardDescription>
+              <CardDescription>Assets used across all variants and channels.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <AutoHasManyForm field="media" label="Media">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <AutoBelongsToInput field="file" optionLabel="filename" />
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <AutoBelongsToInput field="file" optionLabel="filename" />
+                    <AutoInput field="alt" />
+                  </div>
                   <AutoNumberInput field="position" />
                 </div>
               </AutoHasManyForm>
+              <AutoJSONInput field="mediaData" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Design & assignments</CardTitle>
+              <CardDescription>Track design ownership, placements, and variant assignments.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <AutoInput field="designId" />
+              <AutoJSONInput field="designAssignments" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Mockups</CardTitle>
+              <CardDescription>Maintain configuration and generated assets for storefront mockups.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <AutoJSONInput field="mockupConfig" />
+              <AutoJSONInput field="mockupAssets" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>SEO & organization</CardTitle>
+              <CardDescription>Metadata surfaced on sales channels and storefronts.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <AutoInput field="seoTitle" />
+                <AutoRichTextInput field="seoDescription" />
+              </div>
+              <AutoInput field="tags" />
+              <AutoJSONInput field="customCollections" />
             </CardContent>
           </Card>
         </div>
@@ -714,5 +471,6 @@ export default function SellerProductDetail({ loaderData }: Route.ComponentProps
         </div>
       </AutoForm>
     </div>
+    </GadgetProvider>
   );
 }
