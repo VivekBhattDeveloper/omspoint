@@ -71,7 +71,9 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
       id: record.id ?? `seller-payment-${index}`,
       amount: typeof record.amount === "number" ? record.amount : parseFloat(record.amount ?? "0"),
       paymentMethod: record.paymentMethod ?? null,
-      paymentDate: record.paymentDate ?? null,
+      paymentDate: record.paymentDate instanceof Date 
+        ? record.paymentDate.toISOString() 
+        : (typeof record.paymentDate === "string" ? record.paymentDate : null),
       orderId: record.order?.orderId ?? null,
     }));
 

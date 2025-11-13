@@ -1,0 +1,53 @@
+Title: _app.vendor.qa._index page
+Route file: web/routes/_app.vendor.qa._index.tsx
+Suggested path: /app/vendor/qa
+
+Role/Purpose
+- Provide vendor-facing quality assurance dashboard with production line monitoring, quality checkpoints, exception tracking, and golden sample approvals.
+- Enable vendors to monitor QA metrics, track exceptions, and manage quality checkpoints across production lines.
+
+Primary UI Components
+- `PageHeader` with title "Quality Assurance" and description.
+- Summary cards showing total lines, active exceptions, checkpoints needing attention, and golden samples pending.
+- `Tabs` component with four tabs: Production Lines, Quality Checkpoints, Exceptions, Golden Samples.
+- Custom `Table` components in each tab showing relevant records with status badges and formatted values.
+- Production Lines table: Name, Defect rate, QA holds, Golden sample status, Throughput, Active exceptions, Next audit.
+- Quality Checkpoints table: Stage, Status, Inspector, Last run, Next due, Automation coverage, Notes.
+- Exceptions table: Item, Issue, Severity, Corrective action, Owner, Due, Status, Attachments.
+- Golden Samples table: Item, Inspector, Approved at, DeltaE, Wash test, Notes.
+- Status badges with color coding: pass=emerald, attention=amber, fail=rose, passing=emerald, blocked=rose, critical=rose, high=amber, medium=sky, low=slate.
+
+Data Dependencies
+- Currently uses client-side sample data (no loader yet).
+- Sample data includes: production lines (4 lines), quality checkpoints (8 checkpoints), exceptions (3 exceptions), golden sample approvals (2 approvals).
+- Data computed via `useMemo` hook with date calculations using `date-fns` functions (`subHours`, `addHours`, `subDays`, `subMinutes`).
+
+Actions & Side Effects
+- Tab switching updates visible content (client-side).
+- No mutations yet—page is read-only monitoring view.
+- Relative date formatting uses `formatDistanceToNowStrict` from `date-fns`.
+
+Acceptance Criteria
+- Page renders with sample data showing production lines, checkpoints, exceptions, and golden samples.
+- Tabs switch correctly between all four categories.
+- Status badges display with correct colors based on status/severity values.
+- Relative dates format correctly (e.g., "2 hours ago").
+- Summary metrics accurately reflect data across all tabs.
+- Exception attachments display with appropriate icons (photo, measurement, note).
+
+QA & Tests
+- Manual: Verify all four tabs load and display data correctly.
+- Manual: Test tab switching between all categories.
+- Manual: Check status badge colors match record status/severity.
+- Manual: Verify relative date formatting displays correctly.
+- Manual: Check summary metrics match tab contents.
+- Future: Add loader to fetch real QA data from API once models are available.
+- Future: Add unit tests for date calculations and status badge logic.
+
+Notes
+- Currently uses client-side sample data—needs loader implementation once QA models are available.
+- Status badge configurations use consistent color schemes across all tabs.
+- Relative dates improve UX by showing human-readable time differences.
+- Exception attachments support multiple types (photo, measurement, note) with appropriate icons.
+- Consider adding filtering/search within each tab for large datasets.
+- Consider adding mutation actions (update exception status, approve golden sample) in future iterations.

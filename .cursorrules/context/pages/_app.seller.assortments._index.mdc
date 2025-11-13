@@ -1,0 +1,57 @@
+Title: _app.seller.assortments._index page
+Route file: web/routes/_app.seller.assortments._index.tsx
+Suggested path: /app/seller/assortments
+
+Role/Purpose
+- Provide seller-facing assortment management interface with template management, guardrail policies, and approval workflows.
+- Enable sellers to manage product assortments, configure templates, monitor guardrail coverage, and track approvals.
+
+Primary UI Components
+- `PageHeader` with title "Assortments" and description.
+- Summary metric cards: Active assortments, Guardrail coverage, Pending approvals, Templates in flight.
+- Custom `Table` components showing assortment templates, guardrail policies, and approval requests.
+- Template table: Name, Cadence, Channels, Guardrails, Owner, Status.
+- Guardrail policies table: Name, Coverage, Description, Status, Gaps.
+- Approval requests table: Template, Action, Status, Due date.
+- Status badges: live, review, draft, healthy, attention, planning, approved, waiting, scheduled.
+- Action buttons: Create template, Edit, Approve, Reject.
+
+Data Dependencies
+- Currently uses client-side sample data (no loader yet).
+- Sample data includes: summary metrics, template rows, guardrail policies, approval requests.
+- Data defined as constants and computed from sample structures.
+
+Actions & Side Effects
+- Create template button: Opens template creation dialog (stub implementation).
+- Edit button: Opens template editing dialog (stub implementation).
+- Approve/Reject buttons: Update approval status (client-side state updates, toast feedback).
+- No mutations yet—page is read-only monitoring view with stub actions.
+
+Acceptance Criteria
+- Page renders with sample data showing assortment metrics, templates, and policies.
+- Summary metrics display correctly (active assortments, coverage, approvals, templates).
+- Template table displays all relevant fields with correct formatting.
+- Guardrail policies table shows coverage percentages and status.
+- Approval requests table displays pending approvals with due dates.
+- Status badges display with correct colors based on status values.
+- Action buttons trigger appropriate dialogs or state updates.
+- Empty states handle gracefully when no templates/policies exist.
+
+QA & Tests
+- Manual: Verify all sections load with sample data.
+- Manual: Test create template action (stub implementation).
+- Manual: Test edit template action (stub implementation).
+- Manual: Test approve/reject actions update state correctly.
+- Manual: Check status badge colors match record status.
+- Future: Add loader to fetch real assortment data from API once models are available.
+- Future: Add API mutations for template and approval operations once backend is ready.
+- Future: Add unit tests for approval workflow logic.
+
+Notes
+- Currently uses client-side sample data—needs loader implementation once assortment models are available.
+- Status badge configurations use consistent color schemes across all sections.
+- Guardrail policies provide compliance monitoring for assortments.
+- Approval workflows ensure quality control before publishing.
+- Consider adding real-time approval status updates in future iterations.
+- Consider adding bulk template operations in future iterations.
+- Consider adding guardrail policy configuration in future iterations.

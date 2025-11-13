@@ -253,7 +253,12 @@ export default function AdminFinanceReconciliationDetail({ loaderData }: Route.C
                 <Label htmlFor="status">Status</Label>
                 <Select
                   value={formValues.status}
-                  onValueChange={(value) => setFormValues((current) => ({ ...current, status: value }))}
+                  onValueChange={(value) =>
+                    setFormValues((current) => ({
+                      ...current,
+                      status: value as "pending" | "complete" | "failed",
+                    }))
+                  }
                 >
                   <SelectTrigger id="status">
                     <SelectValue placeholder="Select status" />

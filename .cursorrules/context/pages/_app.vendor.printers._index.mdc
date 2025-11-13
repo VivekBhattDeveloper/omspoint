@@ -1,0 +1,63 @@
+Title: _app.vendor.printers._index page
+Route file: web/routes/_app.vendor.printers._index.tsx
+Suggested path: /app/vendor/printers
+
+Role/Purpose
+- Provide vendor-facing printer fleet management interface with printer status, maintenance scheduling, and jig template management.
+- Enable vendors to monitor printer health, track maintenance tasks, and manage jig templates.
+
+Primary UI Components
+- `PageHeader` with title "Printer Fleet" and description.
+- Search `Input` for filtering printers by label, ID, vendor, or location.
+- Status filter `Select` (All, Online, Maintenance due, Calibration scheduled, Offline).
+- Substrate filter `Select` (All, plus unique substrates from printer fleet).
+- `Tabs` component with three tabs: Printers, Maintenance, Jig Templates.
+- Custom `Table` components in each tab showing relevant records with status badges and formatted values.
+- Printers table: Label, Vendor, Location, Status, Uptime, Capacity/hour, Supported substrates, Last maintenance, Next maintenance, Queue backlog.
+- Maintenance table: Printer, Task, Type, Due date, Due in days, Owner, Status, Notes.
+- Jig Templates table: Label, Media type, Dimensions, Thickness, Tolerance, Status, Last validated, Supported printers.
+- Status badges with color coding: Online=secondary, Maintenance due/Calibration scheduled=outline, Offline=destructive, In progress=default, Pending parts=destructive, Scheduled=outline, Completed=secondary, Approved=secondary, Pending QA=outline, Draft=destructive.
+
+Data Dependencies
+- Currently uses client-side sample data (no loader yet).
+- Sample data includes: printer fleet (5 printers), maintenance tasks (4 tasks), jig templates (5 templates).
+- Data defined as constants (`printerFleet`, `maintenanceTasks`, `jigTemplates`).
+- Filters computed via `useMemo` hooks for search, status, and substrate filtering.
+
+Actions & Side Effects
+- Search input filters printers client-side by label, ID, vendor, or location (case-insensitive, trimmed).
+- Status filter filters printers by status (client-side).
+- Substrate filter filters printers by supported substrates (client-side).
+- Tab switching updates visible content (client-side).
+- Filters work together (all filters must match).
+- No mutations yet—page is read-only monitoring view.
+
+Acceptance Criteria
+- Page renders with sample data showing printers, maintenance tasks, and jig templates.
+- Search filters printers correctly across multiple fields.
+- Status filter filters printers correctly.
+- Substrate filter filters printers correctly.
+- Filters work together (all filters must match).
+- Tabs switch correctly between all three categories.
+- Status badges display with correct colors/variants based on status values.
+- Empty states handle gracefully when no records match filters.
+
+QA & Tests
+- Manual: Verify all three tabs load and display data correctly.
+- Manual: Test search filtering with various terms.
+- Manual: Test status filter with various statuses.
+- Manual: Test substrate filter with various substrates.
+- Manual: Test combined search + status + substrate filters.
+- Manual: Test tab switching between all categories.
+- Manual: Check status badge colors/variants match record status.
+- Future: Add loader to fetch real printer data from API once models are available.
+- Future: Add unit tests for filtering logic.
+
+Notes
+- Currently uses client-side sample data—needs loader implementation once printer models are available.
+- Status badge helper functions provide consistent formatting across all tabs.
+- Client-side filtering for responsive UX without server round-trips.
+- Substrate filter dynamically generates options from printer fleet data.
+- Consider pagination when printer volume exceeds manageable size.
+- Consider server-side filtering if volume grows significantly.
+- Consider adding mutation actions (update printer status, schedule maintenance) in future iterations.

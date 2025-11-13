@@ -1,0 +1,63 @@
+Title: _app.admin.audit._index page
+Route file: web/routes/_app.admin.audit._index.tsx
+Suggested path: /app/admin/audit
+
+Role/Purpose
+- Provide comprehensive audit and compliance dashboard covering audit events, compliance exports, scheduled reports, approval requests, and control checkpoints.
+- Enable administrators to track all system changes, monitor compliance workflows, and review approval processes.
+
+Primary UI Components
+- `PageHeader` with title "Audit & Compliance" and description.
+- `Tabs` component with five tabs: Audit Events, Compliance Exports, Scheduled Reports, Approval Requests, Control Checkpoints.
+- Model filter `Select` for audit events (All models, or specific model).
+- Search `Input` for filtering audit events.
+- Custom `Table` components in each tab showing relevant records with status badges, formatted dates, and action buttons.
+- Status badges with color coding: info=blue, warning=amber, critical=rose, recorded=emerald, awaiting_approval=amber, rejected=rose.
+- Download buttons for compliance exports and scheduled reports.
+
+Data Dependencies
+- Loader calls five parallel API queries: `context.api.auditEvent.findMany()`, `context.api.complianceExport.findMany()`, `context.api.scheduledReport.findMany()`, `context.api.approvalRequest.findMany()`, `context.api.controlCheckpoint.findMany()`.
+- Audit events select: `id`, `timestamp`, `actor`, `actorRole`, `model`, `action`, `target`, `status`, `severity`, `channel`, `diffSummary`, `changeTicket`, `evidencePack` (first 250, sorted by timestamp descending).
+- Compliance exports select: `id`, `name`, `description`, `coverage`, `formats`, `lastGenerated`, `owner`, `status` (first 100, sorted by lastGenerated descending).
+- Scheduled reports select: `id`, `name`, `audience`, `frequency`, `nextRun`, `channel`, `format`, `owner`, `status` (first 100, sorted by nextRun ascending).
+- Approval requests select: `id`, `title`, `submittedBy`, `submittedAt`, `policy`, `risk`, `context`, `pendingApprovers`, `evidence`, `status` (first 100, sorted by submittedAt descending).
+- Control checkpoints select: `id`, `name`, `control`, `owner`, `status`, `lastValidated`, `coverage`, `notes` (first 100, sorted by name ascending).
+- All queries use `.catch(() => [])` to handle failures gracefully, returning empty arrays.
+- Records normalized with type guard functions to ensure type safety.
+
+Actions & Side Effects
+- Tab switching updates visible content (client-side).
+- Model filter filters audit events by model name (client-side).
+- Search input filters audit events by actor/action/target (client-side).
+- Download buttons for compliance exports and scheduled reports (stub implementation).
+- No mutations yet—page is read-only audit view.
+
+Acceptance Criteria
+- Loader handles API success and failure gracefully (empty arrays on failure).
+- All five API queries execute in parallel via `Promise.all`.
+- Tabs switch correctly between all five categories.
+- Model filter correctly filters audit events.
+- Search input filters audit events across multiple fields.
+- Status badges display with correct colors based on status/severity.
+- Date formatting uses `Intl.DateTimeFormat` consistently.
+- Empty states handle gracefully when no records in a category.
+- Risk level badges display correctly (low=emerald, medium=amber, high=rose).
+
+QA & Tests
+- Manual: Simulate API failure to verify empty arrays handled gracefully.
+- Manual: Verify all five tabs load and display data correctly.
+- Manual: Test model filter with various model selections.
+- Manual: Test search input with various query strings.
+- Manual: Check status badge colors match record status/severity.
+- Manual: Check date formatting displays correctly.
+- Unit: Test type guard functions and normalization logic.
+- E2E: Test tab switching, filtering, and search interactions.
+
+Notes
+- Loader implements robust error handling with graceful degradation (empty arrays).
+- Parallel API queries improve load time.
+- Type guard functions ensure type safety when normalizing API records.
+- Client-side filtering provides responsive UX without server round-trips.
+- Consider adding server-side filtering/pagination for large audit event volumes.
+- Consider adding export functionality for audit events.
+- Consider adding approval action buttons in future iterations.

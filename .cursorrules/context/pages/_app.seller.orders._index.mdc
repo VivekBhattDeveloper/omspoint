@@ -1,0 +1,62 @@
+Title: _app.seller.orders._index page
+Route file: web/routes/_app.seller.orders._index.tsx
+Suggested path: /app/seller/orders
+
+Role/Purpose
+- Provide seller-facing orders management interface with search and financial status filtering.
+- Enable sellers to monitor orders, track financial status, and navigate to order details.
+
+Primary UI Components
+- `PageHeader` with title "Orders" and description.
+- `Card` wrapping orders table with header and description.
+- Search `Input` for filtering by order name or customer name (client-side).
+- Financial status filter `Select` (All statuses, Paid, Pending, Partially paid, Refunded).
+- Optional `Alert` banner when `isSample === true` showing "Sample dataset" message with error details.
+- Custom `Table` component from `@/components/ui/table` with columns: Order, Financial status, Total, Customer, Processed.
+- Table rows use `StatusBadge` component for financial status display and are keyboard accessible.
+
+Data Dependencies
+- Loader calls `context.api.shopifyOrder.findMany()` with select: `id`, `name`, `financialStatus`, `totalPrice`, `processedAt`, `customer.displayName`.
+- Sorted by `processedAt: "Descending"`, limited to `first: 250`.
+- On error, returns `sampleOrders` array (3 curated records) with `isSample: true` and `errorMessage`.
+- Orders mapped to `LoaderOrder` type with normalized values (totalPrice parsed as number).
+
+Actions & Side Effects
+- Search input filters orders client-side by order name or customer name (case-insensitive, trimmed).
+- Financial status filter filters orders by financial status (client-side).
+- Table row click/keyboard activation navigates to `/seller/orders/:id`.
+- Alert displays when showing sample data with error message surfaced.
+- Filters work together (both search and status must match).
+
+Acceptance Criteria
+- Loader handles API success and failure gracefully with sample data fallback.
+- Sample data fallback shows alert with error message when API unavailable.
+- Search filters orders by order name or customer name correctly.
+- Financial status filter filters orders correctly and works with search.
+- Table renders order name, financial status badge, formatted total, customer name, and formatted processed date.
+- Status badges use `StatusBadge` component for consistent styling.
+- Currency formatting uses `Intl.NumberFormat` with currency style (USD).
+- Date formatting uses `Intl.DateTimeFormat` with medium date and short time styles.
+- Row click/keyboard navigation works correctly to detail page.
+- Empty state shows "No orders match the current filters." when filtered array is empty.
+
+QA & Tests
+- Manual: Simulate API failure to verify sample data + alert appears.
+- Manual: Test search filtering with various order names and customer names.
+- Manual: Test financial status filter with various statuses.
+- Manual: Test combined search + status filter.
+- Manual: Test keyboard navigation (Tab, Enter, Space) on table rows.
+- Manual: Verify row click navigates to detail page.
+- Manual: Check currency formatting displays correctly.
+- Unit: Test filtering logic with edge cases (empty search, no status filter, etc.).
+- E2E: Test full flow from list → search → filter → detail navigation.
+
+Notes
+- Loader implements robust error handling with sample data fallback pattern.
+- Custom Table component used instead of AutoTable for better control and accessibility.
+- Client-side filtering for responsive UX without server round-trips.
+- Status badges use `StatusBadge` component for consistent styling across the app.
+- Total price field parsed as number to handle string/number conversion.
+- Uses `shopifyOrder` model instead of generic `order` model.
+- Consider pagination when order volume exceeds 250 records.
+- Consider server-side filtering if volume grows significantly.

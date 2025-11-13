@@ -71,7 +71,7 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
         lastName: true,
         email: true,
         emailVerified: true,
-        roles: true,
+        roles: true as any,
       },
       first: 250,
       sort: { createdAt: "Descending" },

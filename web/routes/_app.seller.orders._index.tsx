@@ -78,7 +78,9 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
       name: record.name ?? "Unknown order",
       financialStatus: record.financialStatus ?? null,
       totalPrice: parseFloat(record.totalPrice ?? "0"),
-      processedAt: record.processedAt ?? null,
+      processedAt: record.processedAt instanceof Date 
+        ? record.processedAt.toISOString() 
+        : (typeof record.processedAt === "string" ? record.processedAt : null),
       customerName: record.customer?.displayName ?? null,
     }));
 

@@ -1,6 +1,5 @@
 import { Provider as GadgetProvider } from "@gadgetinc/react";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
-import { Suspense } from "react";
 import { api } from "./api";
 import "./app.css";
 import { ProductionErrorBoundary, DevelopmentErrorBoundary } from "gadget-server/react-router";
@@ -40,12 +39,10 @@ export default function App({ loaderData }: Route.ComponentProps) {
         <Links />
       </head>
       <body>
-        <Suspense>
-          <GadgetProvider api={api}>
-            <Outlet context={{ gadgetConfig, csrfToken }} />
-            <Toaster richColors />
-          </GadgetProvider>
-        </Suspense>
+        <GadgetProvider api={api}>
+          <Outlet context={{ gadgetConfig, csrfToken }} />
+          <Toaster richColors />
+        </GadgetProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

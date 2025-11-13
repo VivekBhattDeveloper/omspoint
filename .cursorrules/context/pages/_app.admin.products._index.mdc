@@ -1,0 +1,50 @@
+Title: _app.admin.products._index page
+Route file: web/routes/_app.admin.products._index.tsx
+Suggested path: /app/admin/products
+
+Role/Purpose
+- Provide an overview of catalog SKUs with KPIs (totals, coverage, average price) and a navigable table.
+- Enable creating a new product and navigating to product detail for edits.
+
+Primary UI Components
+- `PageHeader` with title "Product Catalog", dynamic description showing total count, and "New product" button action.
+- Optional `Alert` banner when `isSample === true` showing "Sample dataset" message with error details.
+- Three KPI `Card`s displaying: Total SKUs (with attached/unassigned breakdown), Order coverage percentage, Average price.
+- `Card`-wrapped custom `Table` component from `@/components/ui/table` with columns: Name, Price, Order, Description, Status.
+- Table rows are keyboard accessible (tabIndex, Enter/Space handlers) and clickable.
+
+Data Dependencies
+- Loader calls `context.api.product.findMany()` with select: `id`, `productName`, `price`, `productDescription.truncatedHTML`, `order.id`, `order.orderId`.
+- Sorted by `createdAt: "Descending"`, limited to `first: 250`.
+- Computes stats via `calculateStats()` helper: `total`, `attached`, `unattached`, `averagePrice`.
+- On error, returns `sampleProducts` array (3 curated records) with `isSample: true` and `errorMessage`.
+- Products mapped to `LoaderProduct` type with `isAttached` boolean derived from order presence.
+
+Actions & Side Effects
+- "New product" button navigates to `/admin/products/new`.
+- Table row click/keyboard activation navigates to `/admin/products/:id`.
+- Alert displays when showing sample data with error message surfaced.
+
+Acceptance Criteria
+- Loader handles API success and failure gracefully with sample data fallback.
+- KPI cards reflect current data correctly: totals, attached/unassigned counts, average price calculation.
+- Sample data fallback shows alert with error message when API unavailable.
+- Table renders key fields (name, price, order, description HTML, status badge).
+- Row click/keyboard navigation works correctly to detail page.
+- New product button navigates to create page.
+- Empty state shows "No products found." when array is empty.
+
+QA & Tests
+- Manual: Simulate API failure to verify sample data + alert appears.
+- Manual: Verify KPI calculations match table data (attached count, average price).
+- Manual: Test keyboard navigation (Tab, Enter, Space) on table rows.
+- Manual: Verify row click navigates to detail page.
+- Unit: Test `calculateStats` helper with various product arrays.
+- E2E: Test full flow from list → row click → detail navigation.
+
+Notes
+- Loader implements robust error handling with sample data fallback pattern.
+- Custom Table component used instead of AutoTable for better control and accessibility.
+- Description HTML is truncated and displayed with `line-clamp-1`.
+- Status badge shows "Attached" or "Unassigned" based on order relationship.
+- Consider pagination when product volume exceeds 250 records.

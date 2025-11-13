@@ -164,7 +164,7 @@ const parseAppliesTo = (value: unknown): string[] => {
 };
 
 export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderData> => {
-  const manager = (context.api as Record<string, unknown> | undefined)?.financeConfig as
+  const manager = (context.api as unknown as Record<string, unknown> | undefined)?.financeConfig as
     | { findMany?: (options: unknown) => Promise<unknown> }
     | undefined;
 
@@ -234,9 +234,10 @@ export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderData>
         ? (entry.status as FinanceConfigRecord["status"])
         : "draft";
 
+      const descriptionObj = entry.description as { plainText?: string } | undefined;
       const description =
-        typeof entry.description?.plainText === "string" && entry.description.plainText.trim().length > 0
-          ? (entry.description.plainText as string)
+        typeof descriptionObj?.plainText === "string" && descriptionObj.plainText.trim().length > 0
+          ? descriptionObj.plainText
           : undefined;
 
       const feeRules = guardArray(entry.feeRules).map((fee: unknown, feeIndex: number) => {

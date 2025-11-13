@@ -253,7 +253,7 @@ const mapSampleStatus = (status?: string | null): GoldenSampleStatus =>
   (status && status.toLowerCase() === "needs_review" ? "Needs refresh" : "Approved");
 
 export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderData> => {
-  const manager = (context.api as Record<string, unknown> | undefined)?.printerDevice as
+  const manager = (context.api as unknown as Record<string, unknown> | undefined)?.printerDevice as
     | { findMany?: (options: unknown) => Promise<unknown> }
     | undefined;
 
@@ -322,7 +322,8 @@ export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderData>
     raw.forEach((record) => {
       const printerId = guardString((record as Record<string, unknown>)?.id);
       const printerName = guardString((record as Record<string, unknown>)?.name ?? printerId);
-      const vendorName = guardString((record as Record<string, unknown>)?.vendor?.name ?? "Unassigned");
+      const vendorObj = (record as Record<string, unknown>)?.vendor as { name?: string } | undefined;
+      const vendorName = guardString(vendorObj?.name ?? "Unassigned");
       const location = guardString((record as Record<string, unknown>)?.location ?? "Unknown");
       const model = guardString((record as Record<string, unknown>)?.model ?? "Device");
       const materials = Array.isArray((record as Record<string, unknown>)?.supportedMaterials)

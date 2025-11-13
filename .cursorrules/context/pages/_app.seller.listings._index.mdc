@@ -1,0 +1,62 @@
+Title: _app.seller.listings._index page
+Route file: web/routes/_app.seller.listings._index.tsx
+Suggested path: /app/seller/listings
+
+Role/Purpose
+- Provide seller-facing marketplace listings management interface with channel health monitoring, sync service status, and listing management.
+- Enable sellers to monitor listing status, track channel health, manage sync services, and handle listing issues.
+
+Primary UI Components
+- `PageHeader` with title "Marketplace Listings" and description.
+- Summary cards showing total listings, published, pending, error, paused, flagged, repricing counts.
+- Channel health cards showing total, published, pending, error, paused counts per channel.
+- Sync service cards showing connection status, last sync, attention count.
+- Custom `Table` component showing listings with columns: Label, Channel, Status, Issues, Last order, Last sync, Orders, Price, Price change, Repricing, Compliance score, Flagged, Suggested action.
+- Status badges: published, pending, error, paused.
+- Action buttons: Refresh, Sync, Pause, Resume.
+
+Data Dependencies
+- Loader calls `context.api.order.findMany()` with filter for last 30 days, selecting: `id`, `orderDate`, `status`, `channel`, `total`, `payment.paymentMethod`, `printJob.status` (first 200, sorted by orderDate descending).
+- Loader aggregates order data by channel to compute listing metrics (totalOrders, pendingOrders, lastOrderDate).
+- Channel labels mapped: creditCard=Amazon, paypal=Shopify, bankTransfer=Walmart.
+- Listing status computed from order data and sync status.
+- On API error, orders array defaults to empty array (graceful degradation).
+
+Actions & Side Effects
+- Refresh button: Triggers sync (stub implementation, shows toast).
+- Sync button: Triggers channel sync (stub implementation, shows toast).
+- Pause/Resume buttons: Update listing status (client-side state updates, toast feedback).
+- Search and filter update visible listings (client-side).
+- All mutations are client-side only—no API calls yet.
+
+Acceptance Criteria
+- Loader handles API success and failure gracefully (empty orders array on error).
+- Summary cards display correct counts computed from listing data.
+- Channel health cards show correct metrics per channel.
+- Sync service cards display connection status and last sync times.
+- Listing table displays all relevant fields with correct formatting.
+- Status badges display correctly based on listing status.
+- Price change indicators show correct direction and percentage.
+- Compliance scores display with appropriate color coding.
+- Empty states handle gracefully when no listings exist.
+
+QA & Tests
+- Manual: Verify loader handles API success and failure gracefully.
+- Manual: Test summary card calculations match listing data.
+- Manual: Verify channel health metrics aggregate correctly.
+- Manual: Test sync service status displays correctly.
+- Manual: Test refresh and sync actions (stub implementations).
+- Manual: Test pause/resume actions update state correctly.
+- Future: Add API mutations for sync actions once backend is ready.
+- Future: Add unit tests for order aggregation and metric calculations.
+- Future: Add E2E tests for listing management flows.
+
+Notes
+- Loader implements robust error handling with graceful degradation (empty orders array).
+- Order metrics computed client-side from aggregated order data.
+- Channel labels mapped to human-readable names.
+- Listing status computed from order data and sync status.
+- All mutations are client-side only—needs API integration once backend actions are ready.
+- Status badges use consistent color schemes (published=emerald, pending=amber, error=rose, paused=slate).
+- Consider adding real-time sync status indicators in future iterations.
+- Consider adding bulk actions for listing management in future iterations.

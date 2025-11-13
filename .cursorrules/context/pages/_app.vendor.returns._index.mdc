@@ -1,0 +1,55 @@
+Title: _app.vendor.returns._index page
+Route file: web/routes/_app.vendor.returns._index.tsx
+Suggested path: /app/vendor/returns
+
+Role/Purpose
+- Provide vendor-facing returns management interface with RMA tracking, fulfillment actions, courier feedback, and integration status.
+- Enable vendors to process returns, track fulfillment actions, and manage courier disputes.
+
+Primary UI Components
+- `PageHeader` with title "Returns Management" and description.
+- `Tabs` component with four tabs: Returns Queue, Fulfillment Actions, Courier Feedback, Integration Status.
+- Custom `Table` components in each tab showing relevant records with status badges and formatted values.
+- Returns Queue table: RMA #, Order, Status, Reason, Channel, Customer, Courier, Tracking, Last update, SLA due, Disposition, Issue summary, Item SKU, Quantity, Value.
+- Fulfillment Actions table: RMA #, Type, Owner team, Status, Due date, Instructions.
+- Courier Feedback table: RMA #, Carrier, Milestone, Dispute status, Response due, Last update, Notes.
+- Integration Status card showing provider, status, last sync, ticket count, linked queues.
+- Status badges with color coding: awaitingVendor=indigo, inspectionPending=amber, restockPending=emerald, reprintPending=sky, completed=slate, awaitingEvidence=amber, evidenceSubmitted=indigo, resolved=emerald.
+
+Data Dependencies
+- Currently uses client-side sample data (no loader yet).
+- Sample data includes: returns (5 records), fulfillment actions (3 records), courier feedback (3 records), integration state (1 record).
+- Data computed via helper functions (`buildReturns()`, `buildActionQueue()`, `buildCourierFeedback()`, `buildIntegrationState()`) with date calculations using `date-fns` functions.
+
+Actions & Side Effects
+- Tab switching updates visible content (client-side).
+- No mutations yet—page is read-only monitoring view.
+- Relative date formatting uses `formatDistanceToNowStrict` from `date-fns`.
+- Status badges use helper functions for consistent formatting.
+
+Acceptance Criteria
+- Page renders with sample data showing returns, actions, courier feedback, and integration status.
+- Tabs switch correctly between all four categories.
+- Status badges display with correct colors based on status values.
+- Relative dates format correctly (e.g., "3 hours ago").
+- Reason codes display with labels and descriptions.
+- Dispute status badges show correct colors and formatted text.
+- Integration status card displays provider connection health.
+
+QA & Tests
+- Manual: Verify all four tabs load and display data correctly.
+- Manual: Test tab switching between all categories.
+- Manual: Check status badge colors match record status.
+- Manual: Verify relative date formatting displays correctly.
+- Manual: Check reason code labels and descriptions display correctly.
+- Future: Add loader to fetch real returns data from API once models are available.
+- Future: Add unit tests for date calculations and status badge logic.
+
+Notes
+- Currently uses client-side sample data—needs loader implementation once returns models are available.
+- Status badge configurations use consistent color schemes across all tabs.
+- Reason codes provide clear labels and descriptions for return reasons.
+- Courier feedback tracks dispute status and response deadlines.
+- Integration status shows connection health for returns management system.
+- Consider adding filtering/search within each tab for large datasets.
+- Consider adding mutation actions (update return status, submit courier evidence) in future iterations.

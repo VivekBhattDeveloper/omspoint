@@ -1,0 +1,65 @@
+Title: _app.vendor.settings._index page
+Route file: web/routes/_app.vendor.settings._index.tsx
+Suggested path: /app/vendor/settings
+
+Role/Purpose
+- Configure payout accounts, compliance documents, escalation contacts, and notification routing for vendor operations.
+- Enable vendors to manage financial accounts, compliance documentation, and communication preferences.
+
+Primary UI Components
+- `PageHeader` with title "Vendor Settings" and description.
+- Multiple `Card` components for: Payout Accounts, Compliance Documents, Escalation Contacts, Notification Preferences, Next Actions.
+- `Dialog` components for adding payout accounts and compliance documents.
+- Custom `Table` components showing accounts, documents, contacts, and notifications.
+- Form inputs: `Input`, `Select`, `Checkbox`, `Textarea`, `Label`.
+- Status badges for account/document status.
+- Action buttons: Add, Edit, Delete, Toggle primary, Toggle flags.
+- Toast notifications for user feedback.
+
+Data Dependencies
+- Loader currently returns seeded client-side data via `createSeedVendorSettings()` helper.
+- Seed data includes: payout accounts (2 accounts), compliance documents (3 documents), escalation contacts (3 contacts), notification preferences (3 preferences), next actions (5 actions).
+- Loader function `loadVendorSettings()` has TODO comment: "Source vendor payout/compliance configuration from Gadget actions once services are online."
+- State managed client-side via `useState` hooks for each data category.
+
+Actions & Side Effects
+- Add payout account: Opens dialog, validates required fields, adds to state, shows toast, closes dialog.
+- Add compliance document: Opens dialog, validates required fields, adds to state, shows toast, closes dialog.
+- Delete payout account: Confirms deletion, removes from state, shows toast.
+- Delete compliance document: Confirms deletion, removes from state, shows toast.
+- Toggle primary account: Updates state, shows toast.
+- Toggle auto-payout/same-day flags: Updates state, shows toast.
+- Toggle notification preferences: Updates state, shows toast.
+- All mutations are client-side only—no API calls yet.
+
+Acceptance Criteria
+- Page renders with seeded data showing accounts, documents, contacts, notifications, and next actions.
+- Add payout account dialog validates required fields and adds account to state.
+- Add compliance document dialog validates required fields and adds document to state.
+- Delete actions prompt for confirmation before removing items.
+- Toggle actions update state correctly and show toast feedback.
+- Only one account can be primary at a time.
+- Status badges display correctly (Active, Pending, Suspended, Approved, Pending, Expired).
+- Next actions show status badges (Todo, In progress, Complete).
+
+QA & Tests
+- Manual: Verify all sections load with seeded data.
+- Manual: Test add payout account flow (valid/invalid inputs).
+- Manual: Test add compliance document flow (valid/invalid inputs).
+- Manual: Test delete actions with confirmation prompts.
+- Manual: Test toggle primary account (ensures only one primary).
+- Manual: Test toggle flags (auto-payout, same-day, notification preferences).
+- Manual: Verify toast notifications appear for all actions.
+- Future: Add loader to fetch real settings from API once models are available.
+- Future: Add API mutations for all actions once backend is ready.
+- Future: Add unit tests for state management and validation logic.
+
+Notes
+- Currently uses client-side seeded data—needs loader implementation once vendor settings models are available.
+- All mutations are client-side only—needs API integration once backend actions are ready.
+- TODO comment in loader indicates future API integration.
+- State management uses `useState` hooks with cloned arrays/objects to avoid mutations.
+- Dialog forms validate required fields before submission.
+- Toast notifications provide user feedback for all actions.
+- Consider adding edit functionality for existing accounts/documents in future iterations.
+- Consider adding file upload for compliance documents in future iterations.

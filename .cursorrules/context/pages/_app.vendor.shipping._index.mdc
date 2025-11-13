@@ -1,0 +1,59 @@
+Title: _app.vendor.shipping._index page
+Route file: web/routes/_app.vendor.shipping._index.tsx
+Suggested path: /app/vendor/shipping
+
+Role/Purpose
+- Provide vendor-facing shipment tracking interface with search and method filtering.
+- Enable vendors to monitor outbound shipments, track carrier methods, and navigate to shipment details for updates.
+
+Primary UI Components
+- `PageHeader` with title "Shipping" and description.
+- `Card` wrapping shipment table with header and description.
+- Search `Input` for filtering by tracking number or order ID (client-side).
+- Method filter `Select` (All methods, Ground, Air, Express).
+- Optional `Alert` banner when `isSample === true` showing "Sample dataset" message with error details.
+- Custom `Table` component from `@/components/ui/table` with columns: Tracking #, Method, Shipment date, Order.
+- Table rows are keyboard accessible and clickable, navigating to detail page.
+- Method badges display with capitalized formatting.
+
+Data Dependencies
+- Loader calls `context.api.shipment.findMany()` with select: `id`, `trackingNumber`, `shipmentMethod`, `shipmentDate`, `order.orderId`.
+- Sorted by `shipmentDate: "Descending"`, limited to `first: 250`.
+- On error, returns `sampleShipments` array (3 curated records) with `isSample: true` and `errorMessage`.
+- Shipments mapped to `LoaderShipment` type with normalized values.
+
+Actions & Side Effects
+- Search input filters shipments client-side by tracking number or order ID (case-insensitive, trimmed).
+- Method filter filters shipments by shipment method (client-side).
+- Table row click/keyboard activation navigates to `/vendor/shipping/:id`.
+- Alert displays when showing sample data with error message surfaced.
+- Filters work together (both search and method must match).
+
+Acceptance Criteria
+- Loader handles API success and failure gracefully with sample data fallback.
+- Sample data fallback shows alert with error message when API unavailable.
+- Search filters shipments by tracking number or order ID correctly.
+- Method filter filters shipments correctly and works with search.
+- Table renders tracking numbers, method badges, formatted dates, and order IDs.
+- Date formatting uses `Intl.DateTimeFormat` with medium date and short time styles.
+- Row click/keyboard navigation works correctly to detail page.
+- Empty state shows "No shipments match the current filters." when filtered array is empty.
+- Method badges display with capitalized formatting (replaces hyphens with spaces).
+
+QA & Tests
+- Manual: Simulate API failure to verify sample data + alert appears.
+- Manual: Test search filtering with various tracking numbers and order IDs.
+- Manual: Test method filter with various methods.
+- Manual: Test combined search + method filter.
+- Manual: Test keyboard navigation (Tab, Enter, Space) on table rows.
+- Manual: Verify row click navigates to detail page.
+- Unit: Test filtering logic with edge cases (empty search, no method filter, etc.).
+- E2E: Test full flow from list → search → filter → detail navigation.
+
+Notes
+- Loader implements robust error handling with sample data fallback pattern.
+- Custom Table component used instead of AutoTable for better control and accessibility.
+- Client-side filtering for responsive UX without server round-trips.
+- Method badge helper function formats method names consistently.
+- Consider pagination when shipment volume exceeds 250 records.
+- Consider server-side filtering if volume grows significantly.

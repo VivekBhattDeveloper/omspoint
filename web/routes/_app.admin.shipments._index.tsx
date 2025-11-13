@@ -91,7 +91,9 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
       id: record.id ?? `shipment-${index}`,
       trackingNumber: record.trackingNumber ?? null,
       shipmentMethod: record.shipmentMethod ?? null,
-      shipmentDate: record.shipmentDate ?? null,
+      shipmentDate: record.shipmentDate instanceof Date 
+        ? record.shipmentDate.toISOString() 
+        : (typeof record.shipmentDate === "string" ? record.shipmentDate : null),
       orderId: record.order?.orderId ?? null,
     }));
 

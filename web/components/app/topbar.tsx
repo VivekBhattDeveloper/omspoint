@@ -130,11 +130,11 @@ export const HelpMenu = () => {
         <DropdownMenuItem asChild className="cursor-pointer">
           <Link to="/help">Workspace help desk</Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="cursor-pointer" target="_blank">
-          <a href="https://docs.gadget.dev" rel="noreferrer">Gadget documentation</a>
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <a href="https://docs.gadget.dev" target="_blank" rel="noreferrer">Gadget documentation</a>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="cursor-pointer" target="_blank">
-          <a href="https://status.gadget.dev" rel="noreferrer">Platform status</a>
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <a href="https://status.gadget.dev" target="_blank" rel="noreferrer">Platform status</a>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

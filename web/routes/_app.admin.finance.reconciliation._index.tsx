@@ -96,7 +96,9 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
       id: run.id ?? `finance-recon-${index}`,
       reconciliationId: run.reconciliationId ?? null,
       status: run.status ?? null,
-      reconciliationDate: run.reconciliationDate ?? null,
+      reconciliationDate: run.reconciliationDate instanceof Date 
+        ? run.reconciliationDate.toISOString() 
+        : (typeof run.reconciliationDate === "string" ? run.reconciliationDate : null),
       orderId: run.order?.orderId ?? null,
     }));
 

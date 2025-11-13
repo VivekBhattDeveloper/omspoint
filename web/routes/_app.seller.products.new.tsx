@@ -31,7 +31,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { sellerProductFormSelect } from "@/lib/sellerProductSelect";
 import type { Route } from "./+types/_app.seller.products.new";
 import { api } from "../api";
-import { Provider as GadgetProvider } from "@gadgetinc/react";
 
 type VendorProductForImport = Route.LoaderData["vendorProducts"][number];
 
@@ -201,8 +200,7 @@ export default function SellerProductCreate({ loaderData }: Route.ComponentProps
   }, [availableFieldSet, disabledRichTextFields]);
 
   return (
-    <GadgetProvider api={api}>
-      <div className="space-y-6">
+    <div className="space-y-6">
       <PageHeader
         title="New seller product"
         description="Create a seller-managed product, optionally importing data from a vendor record."
@@ -230,7 +228,6 @@ export default function SellerProductCreate({ loaderData }: Route.ComponentProps
         />
       </AutoForm>
     </div>
-    </GadgetProvider>
   );
 }
 

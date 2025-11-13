@@ -1,0 +1,61 @@
+Title: _app.vendor.reports._index page
+Route file: web/routes/_app.vendor.reports._index.tsx
+Suggested path: /app/vendor/reports
+
+Role/Purpose
+- Present vendor-facing production, SLA, and finance reports with safe CSV exports.
+- Enable vendors to track production metrics, SLA adherence, payment volumes, and reconciliation status.
+
+Primary UI Components
+- `PageHeader` with title "Reports" and "Export summary CSV" button action.
+- Summary cards showing production status counts, SLA metrics, payment totals, and reconciliation status.
+- `Tabs` component with sections for Production, SLA, Payments, Reconciliations.
+- Custom `Table` components showing weekly summaries, trends, and breach lists.
+- Production section: Status breakdown cards, daily trend table, export button.
+- SLA section: Weekly summary table, top breaches table, export button.
+- Payments section: Method totals, export button.
+- Reconciliations section: Status counts, payout periods table, export button.
+- Progress bars and badges for visual metrics.
+
+Data Dependencies
+- Loader calls four parallel API queries via `Promise.all`: `context.api.printJob.findMany()`, `context.api.shipment.findMany()`, `context.api.payment.findMany()`, `context.api.financeReconciliation.findMany()`.
+- All queries filtered by 30-day horizon (`HORIZON_DAYS = 30`) from current date.
+- Print jobs select: `id`, `printJobId`, `status`, `printDate`, `order.orderId`, `order.orderDate` (first 250, sorted by printDate descending).
+- Shipments select: `id`, `shipmentDate`, `shipmentMethod`, `trackingNumber`, `order.orderId`, `order.orderDate` (first 250, sorted by shipmentDate descending).
+- Payments select: `id`, `amount`, `paymentDate`, `paymentMethod`, `order.orderId` (first 250, sorted by paymentDate descending).
+- Reconciliations select: `id`, `reconciliationId`, `reconciliationDate`, `status`, `order.orderId`, `order.payment.amount` (first 250, sorted by reconciliationDate descending).
+- Internal helpers compute weekly summaries, trends, lead times, SLA breaches, and export rows.
+
+Actions & Side Effects
+- Export buttons generate CSV files client-side with robust guards for browser environment and data shape.
+- CSV exports include: production (printJobId, status, printDate, orderId, leadTimeHours), SLA (trackingNumber, orderId, shipmentDate, fulfillmentHours, shipmentMethod, onTime), payments (paymentId, orderId, amount, paymentMethod, paymentDate), reconciliations (reconciliationId, orderId, status, reconciliationDate, amount).
+- No mutations—page is read-only reporting view.
+
+Acceptance Criteria
+- Loader handles API success gracefully with all four queries executing in parallel.
+- Reports render with defensive fallbacks for missing data.
+- Export actions generate CSV without errors.
+- Metrics and trends match computed loader data.
+- Weekly summaries group data correctly by ISO week.
+- SLA breach detection identifies shipments exceeding 72-hour target.
+- Lead time calculations handle null dates gracefully.
+- Summary cards accurately reflect computed metrics.
+
+QA & Tests
+- Manual: Verify all four API queries load successfully.
+- Manual: Test CSV export buttons generate files correctly.
+- Manual: Verify weekly summaries group data correctly.
+- Manual: Check SLA breach detection identifies correct shipments.
+- Manual: Verify lead time calculations are accurate.
+- Unit: Test helper calculations (`getIsoWeek`, `average`, `formatDay`).
+- Unit: Test CSV generation logic with various data shapes.
+- E2E: Test export actions if feasible in environment.
+
+Notes
+- Loader implements robust error handling with parallel queries for performance.
+- CSV exports use client-side generation with defensive guards for browser compatibility.
+- Weekly summaries use ISO week calculation for consistent grouping.
+- SLA target is 72 hours (`SLA_TARGET_HOURS = 72`).
+- Lead time calculations handle null dates gracefully.
+- Consider adding date range picker for custom reporting periods.
+- Consider adding chart visualizations for trends in future iterations.

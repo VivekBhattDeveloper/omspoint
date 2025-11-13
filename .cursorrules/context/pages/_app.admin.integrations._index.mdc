@@ -1,0 +1,54 @@
+Title: _app.admin.integrations._index page
+Route file: web/routes/_app.admin.integrations._index.tsx
+Suggested path: /app/admin/integrations
+
+Role/Purpose
+- Provide centralized registry of all integrations (marketplaces, couriers, printers) with health monitoring, credential management, and webhook status.
+- Enable administrators to monitor integration health, track credential rotation schedules, and identify webhook failures.
+
+Primary UI Components
+- `PageHeader` with title "Integrations" and description.
+- Summary metric cards showing: Live connections count, Needs attention count, Credentials due count, Webhook alerts count.
+- Type filter `Select` (All, Marketplace, Courier, Printing).
+- Custom `Table` component from `@/components/ui/table` listing integrations with columns: Provider, Type, Status, Mode, Last sync, Credentials, Webhooks.
+- Expandable rows showing credential details (env, status, expiration) and webhook endpoints (url, status, last event).
+- Status badges with icons and color coding (connected=emerald, degraded=amber, requires_action=orange, disconnected=rose).
+- Optional error `Alert` when using fallback data.
+
+Data Dependencies
+- Loader calls optional `context.api.integration.findMany()` with nested selects for `integrationCredentials` and `webhookEndpoints`.
+- Selects: `id`, `provider`, `label`, `type`, `status`, `createdAt`, `updatedAt`, `metadata`, `scopes`, nested credentials and webhooks.
+- If integration model unavailable or query fails, returns `FALLBACK_INTEGRATIONS` array (3 curated records: Shopify, Amazon, FedEx, Printful) with `source: "fallback"` and `error` message.
+- Computes summary metrics from integration records: live connections, needs attention (status !== "connected"), credentials due (rotation_due/expired), webhook alerts (failing/paused).
+
+Actions & Side Effects
+- Type filter updates visible integrations client-side.
+- No mutations yet—page is read-only monitoring view.
+- Error alert displays when `source === "fallback"` with error message.
+
+Acceptance Criteria
+- Loader handles API success and failure gracefully with fallback data.
+- Summary metrics accurately reflect integration health across all records.
+- Type filter correctly filters integrations by type (marketplace/courier/printer).
+- Status badges display with correct colors and icons based on integration status.
+- Credential status badges show rotation due/expired warnings appropriately.
+- Webhook status badges indicate healthy/failing/paused states.
+- Table rows expand to show credential and webhook details.
+- Empty state handles gracefully when no integrations match filter.
+
+QA & Tests
+- Manual: Simulate API failure to verify fallback data + error alert appears.
+- Manual: Verify type filter correctly filters integrations.
+- Manual: Check status badge colors match integration status.
+- Manual: Verify credential expiration dates display correctly.
+- Manual: Check webhook status reflects actual endpoint health.
+- Unit: Test summary metric calculations with various integration arrays.
+- E2E: Test filter interactions and table expansion.
+
+Notes
+- Loader implements robust error handling with fallback data pattern.
+- Custom Table component used for better control over expandable rows.
+- Status configurations use consistent color schemes across integration, credential, and webhook statuses.
+- Credential rotation tracking helps prevent expired credentials from causing outages.
+- Webhook monitoring helps identify integration failures early.
+- Consider adding mutation actions (rotate credentials, pause/resume webhooks) in future iterations.

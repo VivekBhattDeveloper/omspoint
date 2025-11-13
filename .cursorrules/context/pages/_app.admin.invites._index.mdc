@@ -1,0 +1,57 @@
+Title: _app.admin.invites._index page
+Route file: web/routes/_app.admin.invites._index.tsx
+Suggested path: /app/admin/invites
+
+Role/Purpose
+- Provide overview of invitations with KPIs (totals, token readiness) and a searchable list.
+- Enable creating new invites and navigating to invite details for token management.
+
+Primary UI Components
+- `PageHeader` with title "Invites", dynamic description showing total count, and "New invite" button action.
+- Optional `Alert` banner when `isSample === true` showing "Sample dataset" message with error details.
+- Three KPI `Card`s displaying: Total invites, Ready to send (with tokens), Needs action (missing tokens).
+- Search `Input` with `Search` icon for client-side filtering by email.
+- `Card`-wrapped custom `Table` component from `@/components/ui/table` with columns: Email, Token (code formatted).
+- Table rows are keyboard accessible and clickable.
+
+Data Dependencies
+- Loader calls `context.api.invite.findMany()` with select: `id`, `email`, `inviteToken`.
+- Limited to `first: 250`, no explicit sort (defaults to creation order).
+- Computes stats via `computeStats()` helper: `total`, `withTokens` (count with tokens), `withoutTokens` (count without tokens).
+- On error, returns `sampleInvites` array (3 curated records) with `isSample: true` and `errorMessage`.
+- Invites mapped to `LoaderInvite` type with normalized email values.
+
+Actions & Side Effects
+- "New invite" button navigates to `/admin/invites/new`.
+- Table row click/keyboard activation navigates to `/admin/invites/:id`.
+- Search input filters invites client-side by email (case-insensitive, trimmed).
+- Alert displays when showing sample data with error message surfaced.
+- Filtered results update in real-time as user types.
+
+Acceptance Criteria
+- Loader handles API success and failure gracefully with sample data fallback.
+- KPI cards reflect current data: total count, with/without token counts.
+- Sample data fallback shows alert with error message when API unavailable.
+- Search filters visible rows in real-time (client-side filtering).
+- Table renders email addresses and token codes (or "—" if missing).
+- Token codes display with `code` styling (text-xs).
+- Row click/keyboard navigation works correctly to detail page.
+- New invite button navigates to create page.
+- Empty state shows "No invites match your search." when filtered array is empty.
+
+QA & Tests
+- Manual: Simulate API failure to verify sample data + alert appears.
+- Manual: Verify KPI calculations match table data (token counts).
+- Manual: Test search filtering with various email patterns.
+- Manual: Test keyboard navigation (Tab, Enter, Space) on table rows.
+- Manual: Verify row click navigates to detail page.
+- Unit: Test `computeStats` helper with various invite arrays.
+- Unit: Test search filtering logic with edge cases (empty, whitespace, case sensitivity).
+- E2E: Test full flow from list → search → row click → detail navigation.
+
+Notes
+- Loader implements robust error handling with sample data fallback pattern.
+- Custom Table component used instead of AutoTable for better control and accessibility.
+- Client-side search filtering for simplicity (consider server-side if volume grows).
+- Token display uses `code` element with text-xs styling for monospace appearance.
+- Consider pagination when invite volume exceeds 250 records.

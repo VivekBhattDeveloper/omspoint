@@ -1,0 +1,54 @@
+Title: _app.admin.payments._index page
+Route file: web/routes/_app.admin.payments._index.tsx
+Suggested path: /app/admin/payments
+
+Role/Purpose
+- Provide payment ledger overview with KPIs (total volume, most used method, latest capture) and a navigable payment table.
+- Enable logging new payments and navigating to payment details for reconciliation.
+
+Primary UI Components
+- `PageHeader` with title "Payments", dynamic description showing total count and volume, and "Log payment" button action.
+- Optional `Alert` banner when `isSample === true` showing "Sample dataset" message with error details.
+- Three KPI `Card`s displaying: Total volume (with method breakdown), Most used method badge, Latest capture date/time.
+- `Card`-wrapped custom `Table` component from `@/components/ui/table` with columns: Amount, Method, Captured, Order.
+- Table rows are keyboard accessible and clickable.
+
+Data Dependencies
+- Loader calls `context.api.payment.findMany()` with select: `id`, `amount`, `paymentMethod`, `paymentDate`, `order.orderId`.
+- Sorted by `paymentDate: "Descending"`, limited to `first: 250`.
+- Computes stats via `computeStats()` helper: `total`, `totalVolume` (sum of amounts), `latestPaymentDate`, `methodCounts` (record of method -> count).
+- On error, returns `samplePayments` array (3 curated records) with `isSample: true` and `errorMessage`.
+- Payments mapped to `LoaderPayment` type with normalized amount values.
+
+Actions & Side Effects
+- "Log payment" button navigates to `/admin/payments/new`.
+- Table row click/keyboard activation navigates to `/admin/payments/:id`.
+- Alert displays when showing sample data with error message surfaced.
+- Method badges display with uppercase styling and proper formatting.
+
+Acceptance Criteria
+- Loader handles API success and failure gracefully with sample data fallback.
+- KPI cards reflect current data: total volume calculation, method counts, latest payment date.
+- Sample data fallback shows alert with error message when API unavailable.
+- Table renders formatted currency amounts, method badges, formatted dates, and order IDs.
+- Amount formatting uses `Intl.NumberFormat` with currency style (USD).
+- Row click/keyboard navigation works correctly to detail page.
+- New payment button navigates to create page.
+- Empty state shows "No payments recorded." when array is empty.
+- Method badges display with uppercase tracking-wide styling.
+
+QA & Tests
+- Manual: Simulate API failure to verify sample data + alert appears.
+- Manual: Verify KPI calculations match table data (total volume, method counts).
+- Manual: Test keyboard navigation (Tab, Enter, Space) on table rows.
+- Manual: Verify row click navigates to detail page.
+- Manual: Check currency formatting displays correctly.
+- Unit: Test `computeStats` helper with various payment arrays.
+- E2E: Test full flow from list → row click → detail navigation.
+
+Notes
+- Loader implements robust error handling with sample data fallback pattern.
+- Custom Table component used instead of AutoTable for better control and accessibility.
+- Currency formatting uses tabular-nums for consistent alignment.
+- Method badges use variant="outline" with uppercase tracking-wide text-xs styling.
+- Consider pagination when payment volume exceeds 250 records.

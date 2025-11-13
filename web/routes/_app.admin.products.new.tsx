@@ -41,7 +41,7 @@ export default function AdminProductCreate() {
         price: parseFloat(formValues.price || "0"),
         productDescription: formValues.productDescription,
         order: formValues.orderId ? { _link: formValues.orderId } : undefined,
-      });
+      } as any);
       navigate("/admin/products");
     } catch (err) {
       console.error("Failed to create product", err);

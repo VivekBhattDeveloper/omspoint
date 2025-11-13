@@ -59,11 +59,14 @@ export default function AdminShipmentDetail({ loaderData }: Route.ComponentProps
   const navigate = useNavigate();
   const { shipment, orders } = loaderData;
   const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+  const shipmentDateValue = shipment.shipmentDate instanceof Date 
+    ? shipment.shipmentDate.toISOString()
+    : (typeof shipment.shipmentDate === "string" ? shipment.shipmentDate : null);
   const [formValues, setFormValues] = useState({
     trackingNumber: shipment.trackingNumber ?? "",
     shipmentMethod: shipment.shipmentMethod ?? "ground",
-    shipmentDate: shipment.shipmentDate
-      ? new Date(new Date(shipment.shipmentDate).getTime() - new Date().getTimezoneOffset() * 60000)
+    shipmentDate: shipmentDateValue
+      ? new Date(new Date(shipmentDateValue).getTime() - new Date().getTimezoneOffset() * 60000)
           .toISOString()
           .slice(0, 16)
       : "",
@@ -146,7 +149,12 @@ export default function AdminShipmentDetail({ loaderData }: Route.ComponentProps
                 <Label htmlFor="shipmentMethod">Shipment method</Label>
                 <Select
                   value={formValues.shipmentMethod}
-                  onValueChange={(value) => setFormValues((current) => ({ ...current, shipmentMethod: value }))}
+                  onValueChange={(value) =>
+                    setFormValues((current) => ({
+                      ...current,
+                      shipmentMethod: value as typeof current.shipmentMethod,
+                    }))
+                  }
                 >
                   <SelectTrigger id="shipmentMethod">
                     <SelectValue placeholder="Select method" />

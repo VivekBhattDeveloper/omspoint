@@ -1,0 +1,54 @@
+Title: _app.admin.print-jobs._index page
+Route file: web/routes/_app.admin.print-jobs._index.tsx
+Suggested path: /app/admin/print-jobs
+
+Role/Purpose
+- Provide system-wide view of print jobs across all vendors with KPIs (active queue, awaiting schedule, next scheduled run).
+- Enable creating new print jobs and navigating to job details for monitoring and management.
+
+Primary UI Components
+- `PageHeader` with title "Print jobs", dynamic description showing total count, and "New job" button action.
+- Optional `Alert` banner when `isSample === true` showing "Sample dataset" message with error details.
+- Three KPI `Card`s displaying: Active queue (with status breakdown), Awaiting schedule count, Next scheduled run date/time.
+- `Card`-wrapped custom `Table` component from `@/components/ui/table` with columns: Job, Status, Print date, Order.
+- Table rows use `StatusBadge` component for status display and are keyboard accessible.
+
+Data Dependencies
+- Loader calls `context.api.printJob.findMany()` with select: `id`, `printJobId`, `status`, `printDate`, `order.orderId`.
+- Sorted by `printDate: "Descending"`, limited to `first: 250`.
+- Computes stats via `computeStats()` helper: `total`, `statusCounts` (record of status -> count), `awaitingSchedule` (jobs without printDate), `nextScheduledAt` (earliest upcoming date).
+- On error, returns `sampleJobs` array (4 curated records) with `isSample: true` and `errorMessage`.
+- Jobs mapped to `LoaderJob` type with normalized status values.
+
+Actions & Side Effects
+- "New job" button navigates to `/admin/print-jobs/new`.
+- Table row click/keyboard activation navigates to `/admin/print-jobs/:id`.
+- Alert displays when showing sample data with error message surfaced.
+- Status badges use `StatusBadge` component with `kind="printJob"` for consistent styling.
+
+Acceptance Criteria
+- Loader handles API success and failure gracefully with sample data fallback.
+- KPI cards reflect current data: total jobs, status breakdown, awaiting schedule count, next scheduled date.
+- Sample data fallback shows alert with error message when API unavailable.
+- Table renders job ID, status badge, formatted print date, and order ID.
+- Status badges display correctly with appropriate colors/variants.
+- Row click/keyboard navigation works correctly to detail page.
+- New job button navigates to create page.
+- Empty state shows "No print jobs found." when array is empty.
+- Date formatting uses `Intl.DateTimeFormat` with medium date and short time styles.
+
+QA & Tests
+- Manual: Simulate API failure to verify sample data + alert appears.
+- Manual: Verify KPI calculations match table data (status counts, awaiting schedule).
+- Manual: Test keyboard navigation (Tab, Enter, Space) on table rows.
+- Manual: Verify row click navigates to detail page.
+- Manual: Check date formatting displays correctly for various timezones.
+- Unit: Test `computeStats` helper with various job arrays and edge cases.
+- E2E: Test full flow from list → row click → detail navigation.
+
+Notes
+- Loader implements robust error handling with sample data fallback pattern.
+- Custom Table component used instead of AutoTable for better control and accessibility.
+- Status order array used for consistent KPI display: ["pending", "printing", "complete", "failed"].
+- Print date formatting handles null values gracefully (shows "—").
+- Consider pagination when job volume exceeds 250 records.

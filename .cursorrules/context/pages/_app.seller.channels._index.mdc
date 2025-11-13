@@ -1,0 +1,63 @@
+Title: _app.seller.channels._index page
+Route file: web/routes/_app.seller.channels._index.tsx
+Suggested path: /app/seller/channels
+
+Role/Purpose
+- Provide seller-facing channel management interface for configuring sales channels (Amazon, Shopify, Walmart, etc.) with preferences, SLAs, addresses, and contacts.
+- Enable sellers to manage channel configurations, track order metrics, and configure fulfillment settings.
+
+Primary UI Components
+- `PageHeader` with title "Sales Channels" and description.
+- Channel cards showing: Channel name, Provider, Mode, Environment, Region, Order metrics (30d, 7d, 24h), Status badges, Actions dropdown.
+- `Dialog` components for editing channel configurations (Preferences, SLA, Addresses, Contacts).
+- `AlertDialog` components for disconnecting channels.
+- Custom `Table` components showing channel details, addresses, and contacts.
+- Form inputs: `Input`, `Select`, `Checkbox`, `Textarea`, `Label`, `Progress`.
+- Status badges: Connected, Degraded, Requires attention, Disconnected.
+- Action buttons: Connect, Disconnect, Edit, Sync.
+
+Data Dependencies
+- Loader calls `context.api.order.findMany()` with filter for last 30 days, selecting: `id`, `channel`, `orderDate`, `status`, `total`, `payment.paymentMethod`, `printJob.status` (first 200, sorted by orderDate descending).
+- Loader uses `createChannelConfigSeed()` helper to generate channel preferences, SLAs, addresses, and contacts.
+- Channel definitions include: Amazon, Shopify, Walmart, Square, Etsy (with provider, mode, environment, region).
+- Order data aggregated by channel to compute metrics (orders30d, orders7d, orders24h, delivered, shipped, pending, cancelled, totalValue30d, printFailures).
+- On API error, orders array defaults to empty array (graceful degradation).
+
+Actions & Side Effects
+- Channel card actions: Connect (opens dialog), Disconnect (shows alert dialog), Edit (opens configuration dialog), Sync (shows toast).
+- Configuration dialogs: Update preferences, SLA, addresses, contacts (client-side state updates, toast feedback).
+- Disconnect action: Confirms via alert dialog, updates state, shows toast.
+- Sync action: Shows toast feedback (stub implementation).
+- All mutations are client-side only—no API calls yet.
+
+Acceptance Criteria
+- Loader handles API success and failure gracefully (empty orders array on error).
+- Channel cards display with correct metrics computed from order data.
+- Channel definitions display correctly (provider, mode, environment, region).
+- Order metrics aggregate correctly by channel (30d, 7d, 24h windows).
+- Status badges display correctly based on channel health.
+- Configuration dialogs update state correctly and show toast feedback.
+- Disconnect action prompts for confirmation before updating state.
+- Empty states handle gracefully when no orders for a channel.
+
+QA & Tests
+- Manual: Verify loader handles API success and failure gracefully.
+- Manual: Test channel card displays with various order data.
+- Manual: Verify order metrics aggregate correctly by channel.
+- Manual: Test configuration dialogs (preferences, SLA, addresses, contacts).
+- Manual: Test disconnect action with confirmation prompt.
+- Manual: Verify toast notifications appear for all actions.
+- Manual: Check status badges display correctly based on channel health.
+- Future: Add API mutations for channel configuration once backend is ready.
+- Future: Add unit tests for order aggregation and metric calculations.
+- Future: Add E2E tests for channel configuration flows.
+
+Notes
+- Loader implements robust error handling with graceful degradation (empty orders array).
+- Order metrics computed client-side from aggregated order data.
+- Channel configurations use seeded data—needs API integration once backend is ready.
+- All mutations are client-side only—needs API integration once backend actions are ready.
+- Status badges use consistent color schemes (connected=emerald, degraded=amber, requires_action=orange, disconnected=rose).
+- Configuration dialogs provide comprehensive channel management (preferences, SLA, addresses, contacts).
+- Consider adding real-time sync status indicators in future iterations.
+- Consider adding channel health monitoring and alerting in future iterations.

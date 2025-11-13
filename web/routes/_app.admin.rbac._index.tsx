@@ -108,7 +108,7 @@ const serializeError = (error: unknown): string => {
 };
 
 export const loader = async ({ context }: Route.LoaderArgs) => {
-  const manager = (context.api as Record<string, unknown> | undefined)?.featureFlag as
+  const manager = (context.api as unknown as Record<string, unknown> | undefined)?.featureFlag as
     | { findMany?: (options: unknown) => Promise<unknown> }
     | undefined;
 
@@ -142,11 +142,14 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
           return undefined;
         }
 
+        const descriptionObj = entry.description as { plainText?: string } | string | undefined;
         const description =
-          typeof entry.description?.plainText === "string" && entry.description.plainText.trim().length > 0
-            ? entry.description.plainText
-            : typeof entry.description === "string"
-              ? entry.description
+          typeof descriptionObj === "object" && descriptionObj !== null
+            ? (typeof descriptionObj.plainText === "string" && descriptionObj.plainText.trim().length > 0
+                ? descriptionObj.plainText
+                : undefined)
+            : typeof descriptionObj === "string"
+              ? descriptionObj
               : undefined;
 
         const enabledRoles = Array.isArray(entry.enabledRoles)
@@ -161,7 +164,7 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
           category: typeof entry.category === "string" && entry.category.length > 0 ? entry.category : undefined,
         } satisfies FeatureFlag;
       })
-      .filter((flag): flag is FeatureFlag => Boolean(flag));
+      .filter((flag): flag is NonNullable<typeof flag> => flag !== undefined);
 
     return { featureFlags, source: "api" as const };
   } catch (error) {

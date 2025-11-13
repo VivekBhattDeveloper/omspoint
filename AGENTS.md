@@ -11,41 +11,47 @@
 - Gadget syncs model metadata to `.gadget/sync/models/<modelName>/schema.gadget.ts` so you can edit schemas locally.
 
 ## Managing Model Schemas
+⚠️ CRITICAL: Schema Verification Required
+Following the incident on [date of the serious error], all data queries MUST 
+be preceded by explicit schema verification. Never assume a field's type or 
+structure. Always consult the application details model schema before writing 
+any query code. This documentation exists to prevent data access errors that 
+can break production functionality.
+
+- Before editing make sure it follows gadgets format as per there documentation.
 - Edit the generated `schema.gadget.ts` files to add fields, validations, and relationships.
 - Sample schema illustrating common field types:
-  ```ts
-  // .gadget/sync/models/conversation/schema.gadget.ts
+
+  // .gadget/sync/models/blogPost/schema.gadget.ts
   import type { GadgetModel } from "gadget-server";
 
   export const schema: GadgetModel = {
     type: "gadget/model-schema/v1",
-    storageKey: "conversation",
+    storageKey: "DataModel-abc123xyz",
     fields: {
       title: { type: "string", validations: { required: true } },
-      status: {
-        type: "enum",
-        options: ["open", "assigned", "resolved", "closed"],
-        validations: { required: true },
-        default: "open"
-      },
-      priority: {
-        type: "enum",
-        options: ["low", "medium", "high", "urgent"],
-        default: "medium"
-      },
-      assignedAgent: {
+      body: { type: "richText" },
+      publishedAt: { type: "dateTime", includeTime: true },
+      author: { 
         type: "belongsTo",
         parent: { model: "user" }
-      },
-      customerEmail: {
-        type: "email",
-        validations: { required: true }
-      },
-      lastResponseAt: { type: "dateTime" },
-      resolvedAt: { type: "dateTime" }
+      }
     }
   };
-  ```
+
+- Schema Best Practices Checklist
+     All relationships have both sides defined
+     Field names use camelCase
+     Required fields have appropriate defaults or are truly necessary
+     Unique constraints are on fields that should be unique
+     Enum fields have defined options
+     DateTime fields have includeTime specified
+     BelongsTo fields have clear parent references
+     HasMany/HasOne fields reference correct belongsToField
+     File fields specify allowPublicAccess appropriately
+     Number fields have appropriate decimals setting
+     Password fields use password type, not string
+     Sensitive data uses encryptedString type
 
 ## Adding Actions
 - Create model-specific actions with `ggt add action <modelName> <actionName>`.
@@ -80,3 +86,6 @@
 - Preventive Measures: Replaced the `AutoTable` dependency with a local table to avoid missing provider requirements while keeping keyboard navigation, status badges, and date formatting intact (`web/routes/_app.admin.print-jobs._index.tsx:120`).
 - Operator Awareness: Added an in-page alert whenever sample data is displayed so the data source is obvious to admins (`web/routes/_app.admin.print-jobs._index.tsx:97`).
 - QA Follow-up: Playwright suites currently fail before exercising this view; rerun once the harness is green to confirm no regressions.
+
+## Testing live page
+- Test directly in the browser: open https://omspoint--development.gadget.app and navigate to your routes (e.g., /admin, /vendor, /seller)

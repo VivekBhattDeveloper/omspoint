@@ -354,7 +354,7 @@ export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderResul
     error,
   });
 
-  const manager = (context.api as Record<string, unknown> | undefined)?.["integration"] as
+  const manager = (context.api as unknown as Record<string, unknown> | undefined)?.["integration"] as
     | { findMany?: (args: unknown) => Promise<unknown> }
     | undefined;
 

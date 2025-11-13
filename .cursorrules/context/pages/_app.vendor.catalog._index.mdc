@@ -1,0 +1,68 @@
+Title: _app.vendor.catalog._index page
+Route file: web/routes/_app.vendor.catalog._index.tsx
+Suggested path: /app/vendor/catalog
+
+Role/Purpose
+- Provide vendor catalog management interface with three tabs: Asset Reviews, Catalog Mappings, and Version History.
+- Enable vendors to review asset quality, manage SKU-to-product mappings, and track version changes.
+
+Primary UI Components
+- `PageHeader` with title "Catalog Management" and description.
+- Optional `Alert` banner when `isSample === true` showing sample dataset message with error details.
+- `Tabs` component with three tabs: Asset Reviews, Catalog Mappings, Version History.
+- Each tab contains a custom `Table` component from `@/components/ui/table` with relevant columns.
+- Asset Reviews table: SKU, Name, Template, Jig, Status (with checks), Reviewer, Updated.
+- Catalog Mappings table: Vendor SKU, Product, Template, Jig, Status, Notes, Last updated.
+- Version History table: SKU, Version, Status, Note, Actor, Published.
+- Status badges with color coding: passed=emerald, warning=amber, failed=rose, draft=slate, ready=sky, published=emerald, deprecated=orange.
+- Bulk CSV upload form and manual product creation form (in Asset Reviews tab).
+
+Data Dependencies
+- Loader calls three parallel API queries via `Promise.all`: `context.api.assetReview.findMany()`, `context.api.catalogMapping.findMany()`, `context.api.catalogVersion.findMany()`.
+- Asset reviews select: `id`, `sku`, `name`, `assetUrl`, `template`, `jig`, `status`, `reviewer`, `updatedAt`, `checks` (first 250).
+- Catalog mappings select: `id`, `vendorSku`, `productId`, `productName`, `template`, `jig`, `status`, `notes`, `lastUpdated` (first 250).
+- Catalog versions select: `id`, `sku`, `version`, `status`, `note`, `actor`, `publishedAt` (first 250).
+- On error, returns sample data arrays (`buildSampleAssets()`, `buildSampleMappings()`, `buildSampleVersions()`) with `isSample: true` and `errorMessage`.
+- Records normalized with type guards to ensure type safety.
+
+Actions & Side Effects
+- Tab switching updates visible content (client-side).
+- Bulk CSV upload form processes CSV data (stub implementation, shows toast feedback).
+- Manual product creation form submits via `api.vendorProduct.create()` and navigates to products list on success.
+- Alert displays when showing sample data with error message surfaced.
+- Relative date formatting uses `date-fns` `formatDistanceToNow` for asset reviews.
+
+Acceptance Criteria
+- Loader handles API success and failure gracefully with sample data fallback.
+- All three API queries execute in parallel via `Promise.all`.
+- Tabs switch correctly between Asset Reviews, Catalog Mappings, and Version History.
+- Status badges display with correct colors based on status values.
+- Asset reviews show check outcomes (pass/warn/fail) with appropriate icons.
+- Catalog mappings show product linkage and mapping status.
+- Version history shows actor and published timestamps.
+- Bulk CSV upload shows processing status and toast feedback.
+- Manual product creation form validates and submits correctly.
+- Empty states handle gracefully when no records in a category.
+- Relative dates format correctly (e.g., "2 hours ago").
+
+QA & Tests
+- Manual: Simulate API failure to verify sample data + alert appears.
+- Manual: Verify all three tabs load and display data correctly.
+- Manual: Test tab switching between all three categories.
+- Manual: Check status badge colors match record status.
+- Manual: Test bulk CSV upload form (with valid/invalid CSV).
+- Manual: Test manual product creation form validation and submission.
+- Manual: Verify relative date formatting displays correctly.
+- Unit: Test type guard functions and normalization logic.
+- Unit: Test CSV parsing logic (if implemented).
+- E2E: Test tab switching, form submissions, and navigation.
+
+Notes
+- Loader implements robust error handling with sample data fallback pattern.
+- Parallel API queries improve load time.
+- Type guard functions ensure type safety when normalizing API records.
+- Status badge configurations use consistent color schemes.
+- Bulk CSV upload is stub implementation—needs full CSV parsing and validation.
+- Manual product creation form provides alternative to bulk upload.
+- Relative dates improve UX by showing human-readable time differences.
+- Consider adding filtering/search within each tab for large datasets.

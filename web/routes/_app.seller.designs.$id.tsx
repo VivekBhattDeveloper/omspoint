@@ -226,10 +226,10 @@ export const loader = async ({ context, params }: Route.LoaderArgs) => {
     try {
       const assignmentRecords = (await context.api.sellerProduct.findMany({
         select: assignmentSelect,
-        filter: { designId: { equals: design.id } },
+        filter: { designId: { equals: design.id } } as any,
         sort: { updatedAt: "Descending" },
         first: 50,
-      })) as Array<Record<string, unknown>>;
+      })) as unknown as Array<Record<string, unknown>>;
 
       assignments = normalizeAssignments(assignmentRecords);
     } catch (error) {

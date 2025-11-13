@@ -103,7 +103,9 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
       id: record.id ?? `print-job-${index}`,
       jobId: record.printJobId ?? "—",
       status: record.status ?? "unknown",
-      printDate: record.printDate ?? null,
+      printDate: record.printDate instanceof Date 
+        ? record.printDate.toISOString() 
+        : (typeof record.printDate === "string" ? record.printDate : null),
       orderId: record.order?.orderId ?? null,
     }));
 

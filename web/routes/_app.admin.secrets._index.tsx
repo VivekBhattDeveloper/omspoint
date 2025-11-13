@@ -191,7 +191,7 @@ const normalizeSecret = (record: any): SecretRecord | undefined => {
         checksum: toOptionalString(version?.checksum),
       } satisfies SecretVersionRecord;
     })
-    .sort((a, b) => b.versionNumber - a.versionNumber);
+    .sort((a: { versionNumber: number }, b: { versionNumber: number }) => b.versionNumber - a.versionNumber);
 
   const createdByName =
     toOptionalString(record?.createdBy?.name) ??
@@ -214,7 +214,7 @@ const normalizeSecret = (record: any): SecretRecord | undefined => {
 };
 
 export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderResult> => {
-  const manager = (context.api as Record<string, unknown> | undefined)?.secret as
+  const manager = (context.api as unknown as Record<string, unknown> | undefined)?.secret as
     | { findMany?: (options: unknown) => Promise<unknown> }
     | undefined;
 

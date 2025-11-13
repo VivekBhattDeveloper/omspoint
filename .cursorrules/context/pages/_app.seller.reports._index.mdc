@@ -1,0 +1,62 @@
+Title: _app.seller.reports._index page
+Route file: web/routes/_app.seller.reports._index.tsx
+Suggested path: /app/seller/reports
+
+Role/Purpose
+- Provide seller-facing reports interface with sales overview, channel breakdown, assortment performance, compliance monitoring, and settlement tracking.
+- Enable sellers to track sales metrics, monitor channel performance, assess compliance, and review settlement cycles.
+
+Primary UI Components
+- `PageHeader` with title "Reports" and description.
+- Sales overview cards: Total GMV, Order count, Average order value, Delivered rate, Pending count, Cancelled count, GMV change.
+- Trend chart/table showing daily sales over 14-day period.
+- Channel breakdown table: Channel, Payment method, GMV, Orders, Share.
+- Assortment performance table: Name, GMV, Orders, Share, Last order date.
+- Compliance section: Summary (healthy, monitor, action counts), Listings table, Tasks table.
+- Settlements section: Summary (cycles, orders, amount), Cycles table, Next payout card.
+- Status badges: healthy, monitor, action, Complete, In progress, Attention needed.
+
+Data Dependencies
+- Loader calls `context.api.order.findMany()` with filter for last 30 days, selecting: `id`, `orderDate`, `status`, `channel`, `total`, `payment.paymentMethod`, `sellerProduct.assortment.id`, `sellerProduct.assortment.name` (first 250, sorted by orderDate descending).
+- Loader aggregates order data to compute sales overview, trends, channel breakdown, assortment performance, compliance scores, and settlement cycles.
+- Trend computed over `TREND_DAYS = 14` period.
+- Compliance scores computed with minimum threshold `MIN_COMPLIANCE_SCORE = 35`.
+- Weekly summaries use ISO week calculation (`getIsoWeek` helper).
+- On API error, orders array defaults to empty array (graceful degradation).
+
+Actions & Side Effects
+- No mutations—page is read-only reporting view.
+- Data computed client-side from aggregated order data.
+
+Acceptance Criteria
+- Loader handles API success and failure gracefully (empty orders array on error).
+- Sales overview metrics accurately reflect order data (GMV, order count, AOV, delivered rate).
+- Trend data displays correctly over 14-day period.
+- Channel breakdown aggregates correctly by channel and payment method.
+- Assortment performance aggregates correctly by assortment.
+- Compliance scores computed correctly with minimum threshold.
+- Settlement cycles grouped correctly by ISO week.
+- Status badges display with correct colors based on status values.
+- Empty states handle gracefully when no data exists.
+
+QA & Tests
+- Manual: Verify loader handles API success and failure gracefully.
+- Manual: Test sales overview calculations match order data.
+- Manual: Verify trend data aggregates correctly over 14-day period.
+- Manual: Test channel breakdown aggregates correctly.
+- Manual: Test assortment performance aggregates correctly.
+- Manual: Verify compliance scores computed correctly.
+- Manual: Test settlement cycles grouped correctly by ISO week.
+- Unit: Test helper calculations (`getIsoWeek`, `formatDay`, `safeDate`).
+- Unit: Test aggregation logic for sales, channels, assortments.
+- E2E: Test report rendering with various data scenarios.
+
+Notes
+- Loader implements robust error handling with graceful degradation (empty orders array).
+- Order metrics computed client-side from aggregated order data.
+- Weekly summaries use ISO week calculation for consistent grouping.
+- Compliance scores use minimum threshold for action items.
+- Trend period configurable via `TREND_DAYS` constant.
+- Consider adding date range picker for custom reporting periods.
+- Consider adding CSV export functionality in future iterations.
+- Consider adding chart visualizations for trends in future iterations.

@@ -17,12 +17,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { api } from "../api";
 import type { Route } from "./+types/_app.seller.orders.$id";
 
-type LoaderResult = Route.ComponentProps["loaderData"] & {
-  isSample?: boolean;
-  errorMessage?: string;
+type SellerOrderRecord = {
+  id: string;
+  orderId: string | null;
+  [key: string]: unknown;
 };
-
-type SellerOrderRecord = Route.ComponentProps["loaderData"]["order"];
 
 const sampleOrders: Record<string, SellerOrderRecord> = {
   "shopify-order-sample-1": {
@@ -75,13 +74,17 @@ const sampleOrders: Record<string, SellerOrderRecord> = {
   },
 };
 
-export const loader = async ({ context, params }: Route.LoaderArgs) => {
+export const loader = async ({ context, params }: Route.LoaderArgs): Promise<{
+  order: SellerOrderRecord;
+  isSample?: boolean;
+  errorMessage?: string;
+}> => {
   const sampleOrder = sampleOrders[params.id];
   if (sampleOrder) {
     return {
       order: sampleOrder,
       isSample: true,
-    } as LoaderResult;
+    };
   }
 
   try {
@@ -99,9 +102,9 @@ export const loader = async ({ context, params }: Route.LoaderArgs) => {
     });
 
     return {
-      order,
+      order: order as SellerOrderRecord,
       isSample: false,
-    } as LoaderResult;
+    };
   } catch (error) {
     console.error("Failed to load seller order", error);
     const fallbackOrder = sampleOrders["shopify-order-sample-1"];
@@ -120,13 +123,13 @@ export const loader = async ({ context, params }: Route.LoaderArgs) => {
         },
       isSample: true,
       errorMessage: error instanceof Error ? error.message : undefined,
-    } as LoaderResult;
+    };
   }
 };
 
 export default function SellerOrderDetail({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
-  const { order, isSample, errorMessage } = loaderData as LoaderResult;
+  const { order, isSample, errorMessage } = loaderData;
   const currency = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" });
   const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 

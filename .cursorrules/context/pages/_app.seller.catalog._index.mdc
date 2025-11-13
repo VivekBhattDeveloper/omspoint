@@ -1,0 +1,60 @@
+Title: _app.seller.catalog._index page
+Route file: web/routes/_app.seller.catalog._index.tsx
+Suggested path: /app/seller/catalog
+
+Role/Purpose
+- Provide seller-facing catalog management interface with attribute mapping, channel sync status, and validation guardrails.
+- Enable sellers to manage catalog SKUs, track attribute mappings, monitor channel syncs, and ensure compliance.
+
+Primary UI Components
+- `PageHeader` with title "Catalog Management" and description.
+- Summary metric cards: Catalog SKUs, Mapped attributes, Marketplace syncs, Policy coverage.
+- Active filters display showing current filter selections.
+- Saved views cards showing pre-configured catalog views.
+- Custom `Table` components showing attribute mappings, channel sync status, and validation results.
+- Status badges: complete, in-progress, needs-attention, healthy, syncing, blocked, pass, watch, fail.
+- Progress bars for mapping coverage and policy coverage.
+- Action buttons: Refresh, Filter, Upload.
+
+Data Dependencies
+- Currently uses client-side sample data (no loader yet).
+- Sample data includes: summary metrics, active filters, saved views, attribute mappings, channel sync status, validation guardrails.
+- Data defined as constants and computed from sample structures.
+
+Actions & Side Effects
+- Filter actions: Update active filters (client-side state updates).
+- Saved view selection: Apply saved view filters (client-side state updates).
+- Refresh button: Triggers catalog refresh (stub implementation, shows toast).
+- Upload button: Opens upload dialog (stub implementation).
+- No mutations yet—page is read-only monitoring view.
+
+Acceptance Criteria
+- Page renders with sample data showing catalog metrics, filters, and mappings.
+- Summary metrics display correctly (SKU count, mapped attributes, syncs, coverage).
+- Active filters display current selections.
+- Saved views display pre-configured catalog views.
+- Attribute mapping table shows channel, feed attribute, catalog source, coverage, status.
+- Channel sync status displays connection health and sync times.
+- Validation guardrails show compliance status and gaps.
+- Status badges display with correct colors based on status values.
+- Progress bars display coverage percentages correctly.
+
+QA & Tests
+- Manual: Verify all sections load with sample data.
+- Manual: Test filter actions update active filters correctly.
+- Manual: Test saved view selection applies filters correctly.
+- Manual: Test refresh action (stub implementation).
+- Manual: Test upload action (stub implementation).
+- Manual: Check status badge colors match record status.
+- Future: Add loader to fetch real catalog data from API once models are available.
+- Future: Add API mutations for catalog operations once backend is ready.
+- Future: Add unit tests for filter logic and status badge rendering.
+
+Notes
+- Currently uses client-side sample data—needs loader implementation once catalog models are available.
+- Status badge configurations use consistent color schemes across all sections.
+- Progress bars provide visual feedback for coverage metrics.
+- Saved views provide quick access to common catalog configurations.
+- Consider adding real-time sync status indicators in future iterations.
+- Consider adding bulk catalog operations in future iterations.
+- Consider adding catalog validation rules configuration in future iterations.

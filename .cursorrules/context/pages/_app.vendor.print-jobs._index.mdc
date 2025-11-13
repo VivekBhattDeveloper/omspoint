@@ -1,0 +1,58 @@
+Title: _app.vendor.print-jobs._index page
+Route file: web/routes/_app.vendor.print-jobs._index.tsx
+Suggested path: /app/vendor/print-jobs
+
+Role/Purpose
+- Monitor print pipeline with search and status filtering; navigate to job details.
+- Enable vendors to track print job status, search by job ID or order ID, and navigate to job details.
+
+Primary UI Components
+- `PageHeader` with title "Print Jobs" and description.
+- `Card` wrapping print jobs table with header and description.
+- Search `Input` for filtering by print job ID or order ID (client-side).
+- Status filter `Select` (All statuses, Pending, Printing, Complete, Failed).
+- Optional `Alert` banner when `isSample === true` showing "Sample dataset" message with error details.
+- Custom `Table` component from `@/components/ui/table` with columns: Print Job, Status, Print date, Order.
+- Table rows use `StatusBadge` component for status display and are keyboard accessible.
+
+Data Dependencies
+- Loader calls `context.api.printJob.findMany()` with select: `id`, `printJobId`, `status`, `printDate`, `order.orderId`.
+- Sorted by `printDate: "Descending"`, limited to `first: 250`.
+- On error, returns `sampleJobs` array (3 curated records) with `isSample: true` and `errorMessage`.
+- Jobs mapped to `LoaderPrintJob` type with normalized values.
+
+Actions & Side Effects
+- Search input filters jobs client-side by print job ID or order ID (case-insensitive, trimmed).
+- Status filter filters jobs by status (client-side).
+- Table row click/keyboard activation navigates to `/vendor/print-jobs/:id`.
+- Alert displays when showing sample data with error message surfaced.
+- Filters work together (both search and status must match).
+
+Acceptance Criteria
+- Loader handles API success and failure gracefully with sample data fallback.
+- Sample data fallback shows alert with error message when API unavailable.
+- Search filters jobs by print job ID or order ID correctly.
+- Status filter filters jobs correctly and works with search.
+- Table renders job ID, status badge, formatted print date, and order ID.
+- Status badges use `StatusBadge` component with `kind="printJob"` for consistent styling.
+- Row click/keyboard navigation works correctly to detail page.
+- Empty state shows "No print jobs match the current filters." when filtered array is empty.
+- Date formatting uses `Intl.DateTimeFormat` with medium date and short time styles.
+
+QA & Tests
+- Manual: Simulate API failure to verify sample data + alert appears.
+- Manual: Test search filtering with various print job IDs and order IDs.
+- Manual: Test status filter with various statuses.
+- Manual: Test combined search + status filter.
+- Manual: Test keyboard navigation (Tab, Enter, Space) on table rows.
+- Manual: Verify row click navigates to detail page.
+- Unit: Test filtering logic with edge cases (empty search, no status filter, etc.).
+- E2E: Test full flow from list → search → filter → detail navigation.
+
+Notes
+- Loader implements robust error handling with sample data fallback pattern.
+- Custom Table component used instead of AutoTable for better control and accessibility.
+- Client-side filtering for responsive UX without server round-trips.
+- Status badges use `StatusBadge` component for consistent styling across the app.
+- Consider pagination when job volume exceeds 250 records.
+- Consider server-side filtering if volume grows significantly.

@@ -236,7 +236,7 @@ const toControlStatus = (value: unknown): ControlCheckpoint["status"] => {
 };
 
 export const loader = async ({ context }: Route.LoaderArgs) => {
-  const api = context.api as Record<string, unknown>;
+  const api = context.api as unknown as Record<string, unknown>;
 
   const auditPromise = (api.auditEvent as { findMany?: (args: unknown) => Promise<unknown> } | undefined)?.findMany?.({
     select: {

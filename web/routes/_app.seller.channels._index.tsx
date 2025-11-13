@@ -339,7 +339,9 @@ export const loader = async ({ context }: Route.LoaderArgs): Promise<LoaderData>
           printJob: { status: true },
         },
       });
-      orders = Array.isArray(orderData) ? orderData.filter(Boolean) : [];
+      orders = Array.isArray(orderData) 
+        ? (orderData.filter(Boolean) as unknown as OrderRecord[])
+        : [];
     } catch (error) {
       console.warn("Failed to fetch orders for channel analytics:", error);
       orders = [];

@@ -92,8 +92,8 @@ export default function AdminProductDetail({ loaderData }: Route.ComponentProps)
         productName: formValues.productName,
         price: Number.isFinite(price) ? price : 0,
         productDescription: formValues.productDescription,
-        order: formValues.orderId && formValues.orderId !== "none" ? { _link: formValues.orderId } : null,
-      });
+        order: formValues.orderId && formValues.orderId !== "none" ? { _link: formValues.orderId } : undefined,
+      } as any);
 
       navigate("/admin/products");
     } catch (err) {

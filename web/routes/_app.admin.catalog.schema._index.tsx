@@ -171,6 +171,7 @@ export const FALLBACK_PRODUCTS: NormalizedProduct[] = [];
 export const FALLBACK_DATASET: CatalogDataset = {
   products: [],
   vendors: [],
+  validationIssues: [],
   source: "fallback",
 };
 
@@ -189,9 +190,9 @@ const serializeError = (error: unknown): string => {
 };
 
 const toPlainRecord = <T,>(record: T): unknown => {
-  if (record && typeof (record as { toJSON?: () => unknown }).toJSON === "function") {
+  if (record && typeof (record as unknown as { toJSON?: () => unknown }).toJSON === "function") {
     try {
-      return (record as { toJSON: () => unknown }).toJSON();
+      return ((record as unknown as { toJSON: () => unknown }).toJSON());
     } catch {
       return record;
     }
@@ -479,8 +480,9 @@ const ensureVendorAccumulator = (
 
 export const buildAttributeDefinitions = (schema: typeof productModelSchema): AttributeDefinition[] =>
   Object.entries(schema.fields ?? {}).map(([key, field]) => {
-    const validations = field.validations
-      ? Object.entries(field.validations)
+    const fieldWithValidations = field as { validations?: Record<string, unknown> };
+    const validations = fieldWithValidations.validations
+      ? Object.entries(fieldWithValidations.validations)
           .filter(([, value]) => value !== false && value !== undefined)
           .map(([rule, value]) => validationLabel(rule, value))
       : [];
@@ -489,8 +491,8 @@ export const buildAttributeDefinitions = (schema: typeof productModelSchema): At
       key,
       label: toTitleCase(key),
       type: field.type,
-      required: Boolean(field.validations?.required),
-      unique: Boolean(field.validations?.unique),
+      required: Boolean(fieldWithValidations.validations?.required),
+      unique: Boolean(fieldWithValidations.validations?.unique),
       relationship: RELATIONSHIP_TYPES.has(field.type),
       validations,
     } satisfies AttributeDefinition;

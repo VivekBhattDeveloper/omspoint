@@ -72,14 +72,14 @@ const sampleProduct = {
 export const loader = async ({ context, params }: Route.LoaderArgs) => {
   try {
     const product = await context.api.sellerProduct.findOne(params.id, { select: sellerProductFormSelect });
-    return { product, isSample: false } satisfies Route.ComponentProps["loaderData"];
+    return { product, isSample: false } as Route.ComponentProps["loaderData"];
   } catch (error) {
     console.error("Failed to load seller product", error);
     return {
       product: sampleProduct,
       isSample: true,
       errorMessage: error instanceof Error ? error.message : undefined,
-    } satisfies Route.ComponentProps["loaderData"];
+    } as Route.ComponentProps["loaderData"];
   }
 };
 
@@ -124,24 +124,24 @@ export default function SellerProductDetail({ loaderData }: Route.ComponentProps
     [],
   );
   const variantNodes =
-    product.variants?.edges
-      ?.map((edge) => edge?.node)
-      .filter((variant): variant is NonNullable<typeof variant> => Boolean(variant)) ?? [];
+    (product as any).variants?.edges
+      ?.map((edge: any) => edge?.node)
+      .filter((variant: any): variant is NonNullable<typeof variant> => Boolean(variant)) ?? [];
   const mediaNodes =
-    product.media?.edges
-      ?.map((edge) => edge?.node)
-      .filter((mediaItem): mediaItem is NonNullable<typeof mediaItem> => Boolean(mediaItem)) ?? [];
+    (product as any).media?.edges
+      ?.map((edge: any) => edge?.node)
+      .filter((mediaItem: any): mediaItem is NonNullable<typeof mediaItem> => Boolean(mediaItem)) ?? [];
 
   const header = (
     <PageHeader
-      title={product.title ?? "Seller product"}
+      title={(product as any).title ?? "Seller product"}
       description={
         <>
           <span className="inline-flex items-center gap-2">
-            <Badge variant={statusBadgeVariant(product.status)} className="capitalize">
-              {product.status ?? "draft"}
+            <Badge variant={statusBadgeVariant((product as any).status)} className="capitalize">
+              {(product as any).status ?? "draft"}
             </Badge>
-            <Badge variant={channelBadgeVariant(product.channel)}>{product.channel ?? "Unassigned"}</Badge>
+            <Badge variant={channelBadgeVariant((product as any).channel)}>{(product as any).channel ?? "Unassigned"}</Badge>
           </span>
           {product.updatedAt ? (
             <span className="block text-sm text-muted-foreground">
@@ -174,15 +174,15 @@ export default function SellerProductDetail({ loaderData }: Route.ComponentProps
           <CardContent className="grid gap-4 md:grid-cols-2 text-sm text-muted-foreground">
             <div>
               <div className="text-muted-foreground">Handle</div>
-              <div className="font-medium text-foreground">{product.handle ?? product.id}</div>
+              <div className="font-medium text-foreground">{(product as any).handle ?? (product as any).id}</div>
             </div>
             <div>
               <div className="text-muted-foreground">Seller</div>
-              <div className="font-medium text-foreground">{product.seller?.name ?? "Marketplace seller"}</div>
+              <div className="font-medium text-foreground">{(product as any).seller?.name ?? "Marketplace seller"}</div>
             </div>
             <div>
               <div className="text-muted-foreground">Channel status</div>
-              <div className="font-medium text-foreground">{product.channelStatus ?? "draft"}</div>
+              <div className="font-medium text-foreground">{(product as any).channelStatus ?? "draft"}</div>
             </div>
             <div>
               <div className="text-muted-foreground">Vendor product</div>
@@ -270,7 +270,7 @@ export default function SellerProductDetail({ loaderData }: Route.ComponentProps
     <GadgetProvider api={api}>
       <div className="space-y-6">
       {header}
-      <AutoForm action={api.sellerProduct.update} findBy={product.id} select={sellerProductFormSelect}>
+      <AutoForm action={api.sellerProduct.update} findBy={(product as any).id} select={sellerProductFormSelect}>
         <SubmitResultBanner />
         <div className="space-y-6">
           <Card>

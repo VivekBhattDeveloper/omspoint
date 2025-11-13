@@ -1,0 +1,58 @@
+Title: _app.admin.observability._index page
+Route file: web/routes/_app.admin.observability._index.tsx
+Suggested path: /app/admin/observability
+
+Role/Purpose
+- Provide operational dashboard for monitoring service metrics, alerts, incidents, and log forwarders across the OMS platform.
+- Enable operators to track SLO adherence, identify active incidents, and monitor alerting infrastructure health.
+
+Primary UI Components
+- `PageHeader` with title "Observability dashboard" and description.
+- Optional error `Alert` when using fallback data (`source === "fallback"`).
+- Summary cards showing: Metrics count, Open alerts count, Active incidents count, Forwarder issues count.
+- `Tabs` component with four tabs: Metrics, Alerts, Incidents, Log Forwarders.
+- Custom `Table` components in each tab showing relevant records with status badges and formatted values.
+- Status badges with color coding: critical/high=rose/orange, warning=amber, healthy=emerald, degraded=amber, failed=rose.
+
+Data Dependencies
+- Loader calls four parallel API queries: `context.api.serviceMetric.findMany()`, `context.api.alert.findMany()`, `context.api.incident.findMany()`, `context.api.logForwarder.findMany()`.
+- Metrics select: `id`, `serviceName`, `metric`, `currentValue`, `target`, `unit`, `direction`, `capturedAt` (first 25, sorted by capturedAt descending).
+- Alerts select: `id`, `serviceName`, `type`, `severity`, `status`, `openedAt`, `acknowledgedAt`, `resolvedAt`, `runbookUrl`, `summary` (first 25, sorted by openedAt descending).
+- Incidents select: `id`, `title`, `status`, `severity`, `startedAt`, `resolvedAt`, `summary`, `postmortemUrl` (first 25, sorted by startedAt descending).
+- Forwarders select: `id`, `destination`, `provider`, `status`, `lastHeartbeatAt`, `notes` (first 25, sorted by destination ascending).
+- If any model unavailable, returns `FALLBACK_DATA` with sample records and `source: "fallback"` + `error` message.
+- Records normalized with guard functions to ensure type safety.
+
+Actions & Side Effects
+- Tab switching updates visible content (client-side).
+- Summary metrics computed from loaded data (open alerts, active incidents, failing forwarders).
+- Error alert displays when using fallback data.
+- No mutations yet—page is read-only monitoring view.
+
+Acceptance Criteria
+- Loader handles API success and failure gracefully with fallback data.
+- All four API queries execute in parallel via `Promise.all`.
+- Summary metrics accurately reflect current state (open alerts, active incidents, etc.).
+- Tabs switch correctly between Metrics, Alerts, Incidents, and Log Forwarders.
+- Status badges display with correct colors based on severity/status.
+- Metric values formatted correctly (percentages, units, etc.).
+- Date formatting uses `Intl.DateTimeFormat` consistently.
+- Empty states handle gracefully when no records in a category.
+
+QA & Tests
+- Manual: Simulate API failure to verify fallback data + error alert appears.
+- Manual: Verify all four tabs load and display data correctly.
+- Manual: Check summary metrics match tab contents.
+- Manual: Verify status badge colors match record status/severity.
+- Manual: Check date formatting displays correctly.
+- Unit: Test guard functions and normalization logic.
+- Unit: Test summary metric calculations.
+- E2E: Test tab switching and data display.
+
+Notes
+- Loader implements robust error handling with fallback data pattern.
+- Parallel API queries improve load time.
+- Guard functions ensure type safety when normalizing API records.
+- Summary metrics provide quick health overview.
+- Consider adding real-time updates or refresh functionality in future.
+- Consider adding drill-down views for individual metrics/alerts/incidents.

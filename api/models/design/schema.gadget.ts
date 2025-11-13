@@ -1,63 +1,53 @@
 import type { GadgetModel } from "gadget-server";
 
-// Schema definition for the "design" model. Edit via https://omspoint.gadget.app/edit or maintain this file.
+// This file describes the schema for the "design" model, go to https://omspoint.gadget.app/edit to view/edit your model in Gadget
+// For more information on how to update this file http://docs.gadget.dev
 
 export const schema: GadgetModel = {
   type: "gadget/model-schema/v1",
   storageKey: "design",
   fields: {
-    name: {
-      type: "string",
-      validations: { required: true },
-      storageKey: "design::name",
-    },
-    slug: {
-      type: "string",
-      validations: { required: true, unique: true },
-      storageKey: "design::slug",
-    },
-    status: {
-      type: "enum",
-      options: ["draft", "inReview", "approved", "archived"],
-      default: "draft",
-      validations: { required: true },
-      storageKey: "design::status",
-    },
-    designType: {
-      type: "enum",
-      options: ["print", "embroidery", "uv", "sublimation"],
-      default: "print",
-      storageKey: "design::type",
-    },
-    primaryChannel: {
-      type: "string",
-      storageKey: "design::primaryChannel",
-    },
     assignedProductCount: {
       type: "number",
       default: 0,
-      storageKey: "design::assignedProductCount",
+      storageKey: "FdDKIFsyac-n",
     },
-    tags: {
-      type: "json",
-      storageKey: "design::tags",
-    },
-    previewUrl: {
-      type: "url",
-      storageKey: "design::previewUrl",
-    },
-    owner: {
-      type: "belongsTo",
-      parent: { model: "seller" },
-      storageKey: "design::owner",
+    designType: {
+      type: "enum",
+      default: "print",
+      acceptMultipleSelections: false,
+      acceptUnlistedOptions: false,
+      options: ["print", "embroidery", "uv", "sublimation"],
+      storageKey: "Tnlh9u95vOTp",
     },
     lastReviewedAt: {
       type: "dateTime",
-      storageKey: "design::lastReviewedAt",
+      includeTime: true,
+      storageKey: "IIDNDW1CuHkf",
     },
-    notes: {
-      type: "richText",
-      storageKey: "design::notes",
+    mockupPreviewUrl: { type: "string", storageKey: "M3RqJzFlxk1n" },
+    name: {
+      type: "string",
+      validations: { required: true },
+      storageKey: "arWsaIcsVk7g",
     },
+    notes: { type: "richText", storageKey: "design-notes::notes" },
+    previewUrl: { type: "string", storageKey: "oL1_hUk0LTwg" },
+    primaryChannel: { type: "string", storageKey: "HfWAAwmenykK" },
+    slug: {
+      type: "string",
+      validations: { required: true, unique: true },
+      storageKey: "QK-vfv2M3-ae",
+    },
+    status: {
+      type: "enum",
+      default: "draft",
+      acceptMultipleSelections: false,
+      acceptUnlistedOptions: false,
+      options: ["draft", "inReview", "approved", "archived"],
+      validations: { required: true },
+      storageKey: "1YV4QlLTxMNg",
+    },
+    tags: { type: "string", storageKey: "HKBR6Dxd4-bX" },
   },
 };

@@ -1,0 +1,66 @@
+Title: _app.seller.settings._index page
+Route file: web/routes/_app.seller.settings._index.tsx
+Suggested path: /app/seller/settings
+
+Role/Purpose
+- Configure warehouse addresses, escalation contacts, and channel SLAs for seller operations.
+- Enable sellers to manage fulfillment addresses, contact information, and service level agreements.
+
+Primary UI Components
+- `PageHeader` with title "Seller Settings" and description.
+- Multiple `Card` components for: Warehouse Addresses, Escalation Contacts, Channel SLAs.
+- `Dialog` components for adding addresses and contacts.
+- Custom `Table` components showing addresses, contacts, and SLAs.
+- Form inputs: `Input`, `Select`, `Checkbox`, `Textarea`, `Label`.
+- Action buttons: Add, Edit, Delete, Set default, Toggle primary.
+- Toast notifications for user feedback.
+
+Data Dependencies
+- Loader currently returns seeded client-side data via `createChannelConfigSeed()` helper.
+- Seed data includes: warehouse addresses, escalation contacts, channel SLAs.
+- Loader function `loadSellerSettings()` has TODO comment: "Replace seed data with seller settings fetched from finance/SLA services once APIs are available."
+- State managed client-side via `useState` hooks for each data category.
+
+Actions & Side Effects
+- Add warehouse address: Opens dialog, validates required fields, adds to state, shows toast, closes dialog.
+- Add escalation contact: Opens dialog, validates required fields, adds to state, shows toast, closes dialog.
+- Delete address: Confirms deletion, removes from state, shows toast.
+- Delete contact: Confirms deletion, removes from state, shows toast.
+- Set default address: Updates state, shows toast.
+- Toggle primary contact: Updates state, shows toast.
+- Update channel SLA: Updates state, shows toast.
+- All mutations are client-side only—no API calls yet.
+
+Acceptance Criteria
+- Page renders with seeded data showing addresses, contacts, and SLAs.
+- Add address dialog validates required fields and adds address to state.
+- Add contact dialog validates required fields and adds contact to state.
+- Delete actions prompt for confirmation before removing items.
+- Set default/toggle primary actions update state correctly and show toast feedback.
+- Only one address can be default at a time.
+- Only one contact can be primary at a time.
+- Channel SLA updates persist in state correctly.
+
+QA & Tests
+- Manual: Verify all sections load with seeded data.
+- Manual: Test add address flow (valid/invalid inputs).
+- Manual: Test add contact flow (valid/invalid inputs).
+- Manual: Test delete actions with confirmation prompts.
+- Manual: Test set default address (ensures only one default).
+- Manual: Test toggle primary contact (ensures only one primary).
+- Manual: Test channel SLA updates.
+- Manual: Verify toast notifications appear for all actions.
+- Future: Add loader to fetch real settings from API once models are available.
+- Future: Add API mutations for all actions once backend is ready.
+- Future: Add unit tests for state management and validation logic.
+
+Notes
+- Currently uses client-side seeded data—needs loader implementation once seller settings models are available.
+- All mutations are client-side only—needs API integration once backend actions are ready.
+- TODO comment in loader indicates future API integration.
+- State management uses `useState` hooks with cloned arrays/objects to avoid mutations.
+- Dialog forms validate required fields before submission.
+- Toast notifications provide user feedback for all actions.
+- Address types include: fulfillment, returns, pickup.
+- Consider adding edit functionality for existing addresses/contacts in future iterations.
+- Consider adding address validation via geocoding service in future iterations.

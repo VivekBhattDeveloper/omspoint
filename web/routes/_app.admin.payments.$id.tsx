@@ -71,7 +71,11 @@ export default function AdminPaymentDetail({ loaderData }: Route.ComponentProps)
   const [formValues, setFormValues] = useState({
     amount: payment.amount != null ? String(payment.amount) : "",
     paymentMethod: payment.paymentMethod ?? "creditCard",
-    paymentDate: toInputDateTime(payment.paymentDate),
+    paymentDate: toInputDateTime(
+      payment.paymentDate instanceof Date 
+        ? payment.paymentDate.toISOString() 
+        : (typeof payment.paymentDate === "string" ? payment.paymentDate : null)
+    ),
     orderId: payment.order?.id ?? "none",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -151,7 +155,12 @@ export default function AdminPaymentDetail({ loaderData }: Route.ComponentProps)
                 <Label htmlFor="paymentMethod">Payment method</Label>
                 <Select
                   value={formValues.paymentMethod}
-                  onValueChange={(value) => setFormValues((current) => ({ ...current, paymentMethod: value }))}
+                  onValueChange={(value) =>
+                    setFormValues((current) => ({
+                      ...current,
+                      paymentMethod: value as typeof current.paymentMethod,
+                    }))
+                  }
                 >
                   <SelectTrigger id="paymentMethod">
                     <SelectValue placeholder="Select method" />

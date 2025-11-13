@@ -287,7 +287,7 @@ export const loader = async ({ context }: Route.LoaderArgs) => {
           timestamp: typeof entry?.timestamp === "string" ? entry.timestamp : new Date().toISOString(),
           notes: typeof entry?.notes === "string" ? entry.notes : undefined,
         }))
-        .sort((a, b) => (Date.parse(b.timestamp) || 0) - (Date.parse(a.timestamp) || 0));
+        .sort((a: { timestamp: string }, b: { timestamp: string }) => (Date.parse(b.timestamp) || 0) - (Date.parse(a.timestamp) || 0));
 
       return {
         id: record?.id ?? `policy-${policyIndex + 1}`,
